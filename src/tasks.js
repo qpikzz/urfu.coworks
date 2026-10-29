@@ -27,11 +27,11 @@ export function addTask(tasks, task) {
 }
 
 export function removeTask(tasks, id) {
-  return tasks.filter((task) => task.id !== id);
+  return tasks.filter((task) => task.id !== String(id));
 }
 
 export function findTask(tasks, id) {
-  return tasks.find((task) => task.id === id) ?? null;
+  return tasks.find((task) => task.id === String(id)) ?? null;
 }
 
 export function updateStatus(tasks, id, status) {
@@ -42,7 +42,7 @@ export function updateStatus(tasks, id, status) {
   if (!found) {
     throw new Error(`task not found: ${id}`);
   }
-  return tasks.map((task) => (task.id === id ? { ...task, status } : task));
+  return tasks.map((task) => (task.id === found.id ? { ...task, status } : task));
 }
 
 export { STATUSES };
