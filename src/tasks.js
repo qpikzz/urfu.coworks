@@ -45,4 +45,11 @@ export function updateStatus(tasks, id, status) {
   return tasks.map((task) => (task.id === found.id ? { ...task, status } : task));
 }
 
+export function filterByStatus(tasks, status) {
+  if (!STATUSES.includes(status)) {
+    throw new Error(`unknown status: ${status}`);
+  }
+  return tasks.filter((task) => task.status === status);
+}
+
 export { STATUSES };

@@ -5,6 +5,7 @@ import {
   removeTask,
   findTask,
   updateStatus,
+  filterByStatus,
 } from "./tasks.js";
 import { formatTask, formatTaskList } from "./format.js";
 
@@ -29,6 +30,9 @@ export function createStore(initialTasks = []) {
     setStatus(id, status) {
       tasks = updateStatus(tasks, id, status);
     },
+    filter(status) {
+      return filterByStatus(tasks, status);
+    },
     render() {
       return formatTaskList(tasks);
     },
@@ -42,6 +46,7 @@ export {
   removeTask,
   findTask,
   updateStatus,
+  filterByStatus,
   formatTask,
   formatTaskList,
 };

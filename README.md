@@ -34,6 +34,7 @@ console.log(store.render());
 | `store.remove(id)` | Removes a task by id. |
 | `store.find(id)` | Returns a task or `null`. |
 | `store.setStatus(id, status)` | Changes the status of a task. |
+| `store.filter(status)` | Returns tasks with the given status. |
 | `store.render()` | Returns a printable list of tasks. |
 | `formatTask(task)` | Formats a single task. |
 | `formatTaskList(tasks)` | Formats a list of tasks. |

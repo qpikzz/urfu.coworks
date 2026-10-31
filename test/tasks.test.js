@@ -40,6 +40,17 @@ test("store updates status and removes tasks", () => {
   assert.equal(store.tasks.length, 0);
 });
 
+test("store filters tasks by status", () => {
+  const store = createStore();
+  store.add({ id: 1, title: "One" });
+  store.add({ id: 2, title: "Two" });
+  store.setStatus(2, "done");
+
+  assert.deepEqual(store.filter("done").map((task) => task.id), ["2"]);
+  assert.deepEqual(store.filter("todo").map((task) => task.id), ["1"]);
+  assert.throws(() => store.filter("blocked"), /unknown status/);
+});
+
 test("formatTaskList renders empty and non-empty lists", () => {
   assert.equal(formatTaskList([]), "No tasks yet.");
 
