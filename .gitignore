@@ -7,4 +7,5 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 openspec/prompt.md
+openspec/tasks
 temp/
