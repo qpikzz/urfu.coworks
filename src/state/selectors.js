@@ -36,6 +36,13 @@ export function filterRooms(rooms, query) {
   return rooms.filter((room) => matchesRoomSearch(room, query))
 }
 
+export function selectSessionRoom(state, sessionId) {
+  return (
+    state.auditoriums.find((room) => room.occupantIds.includes(sessionId)) ??
+    null
+  )
+}
+
 export function selectSessionRooms(state, sessionId) {
   const session = state.sessions.find((item) => item.id === sessionId)
 
