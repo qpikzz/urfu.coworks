@@ -48,3 +48,56 @@ export function leaveRoom(sessionId) {
 export function continueWork(sessionId) {
   return run(confirmStayTransition, sessionId)
 }
+
+export function setSessionUniversity(sessionId, universityId) {
+  setState((state) => {
+    const session = state.sessions.find((item) => item.id === sessionId)
+
+    if (!session || session.universityId === universityId) return state
+
+    return {
+      ...state,
+      sessions: state.sessions.map((item) =>
+        item.id === sessionId ? { ...item, universityId } : item,
+      ),
+    }
+  })
+}
+
+export function setSessionSearch(sessionId, searchQuery) {
+  setState((state) => {
+    const session = state.sessions.find((item) => item.id === sessionId)
+
+    if (!session || session.searchQuery === searchQuery) return state
+
+    return {
+      ...state,
+      sessions: state.sessions.map((item) =>
+        item.id === sessionId ? { ...item, searchQuery } : item,
+      ),
+    }
+  })
+}
+
+export function toggleSessionBlock(sessionId, blockId) {
+  setState((state) => {
+    const session = state.sessions.find((item) => item.id === sessionId)
+
+    if (!session || !(blockId in session.collapsedBlocks)) return state
+
+    return {
+      ...state,
+      sessions: state.sessions.map((item) =>
+        item.id === sessionId
+          ? {
+              ...item,
+              collapsedBlocks: {
+                ...item.collapsedBlocks,
+                [blockId]: !item.collapsedBlocks[blockId],
+              },
+            }
+          : item,
+      ),
+    }
+  })
+}

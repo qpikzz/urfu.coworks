@@ -17,6 +17,7 @@
   --status-busy: #f26464;
 
   --phone-frame: #0f1117;
+  --overlay: rgba(15, 17, 23, 0.6);
 
   --font-base: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-size-12: 0.75rem;
@@ -49,7 +50,7 @@
 
   --tap-target: 2.75rem;
   --room-row-height: 4rem;
-  --room-list-height: calc(var(--room-row-height) * 5.5);
+  --room-list-height: calc(var(--room-row-height) * 5.5 + var(--space-2) * 5);
 
   --dur-fast: 140ms;
   --dur-base: 240ms;

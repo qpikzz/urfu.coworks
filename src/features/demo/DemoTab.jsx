@@ -1,7 +1,14 @@
 import PhoneFrame from './PhoneFrame.jsx'
+import AppHeader from '../coworkings/AppHeader.jsx'
+import RoomList from '../coworkings/RoomList.jsx'
+import { setSessionUniversity } from '../../state/actions.js'
+import { useStore } from '../../state/useStore.js'
 import '../../styles/demo.css'
 
 export default function DemoTab({ hidden }) {
+  const { sessions } = useStore()
+  const session = sessions[0]
+
   return (
     <section
       id="panel-demo"
@@ -15,7 +22,15 @@ export default function DemoTab({ hidden }) {
         </p>
       </div>
       <div className="demo-layout__stage">
-        <PhoneFrame />
+        <PhoneFrame>
+          <AppHeader
+            universityId={session.universityId}
+            onUniversityChange={(universityId) =>
+              setSessionUniversity(session.id, universityId)
+            }
+          />
+          <RoomList sessionId={session.id} />
+        </PhoneFrame>
       </div>
     </section>
   )
