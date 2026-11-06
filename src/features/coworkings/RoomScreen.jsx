@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { ROOM_STATUS } from '../../data/auditoriums.js'
+import { motionDuration } from '../../lib/motion.js'
 import {
   acceptJoinRequest,
   leaveRoom,
@@ -7,7 +9,10 @@ import {
 import { selectSessionRoom } from '../../state/selectors.js'
 import { FIVE_MINUTES } from '../../state/timers.js'
 import { useStore } from '../../state/useStore.js'
+import RoomCount from './RoomCount.jsx'
 import './coworkings.css'
+
+const REQUEST_EXIT_DURATION = 140
 
 const STATUS_LABELS = {
   [ROOM_STATUS.FREE]: 'Свободное',
@@ -24,6 +29,39 @@ const STATUS_MODIFIERS = {
 function getSessionName(state, sessionId) {
   const session = state.sessions.find((item) => item.id === sessionId)
   return session ? session.name : sessionId
+}
+
+function RequestItem({ name, onAccept, onReject }) {
+  const [leaving, setLeaving] = useState(false)
+
+  function handleAction(action) {
+    if (leaving) return
+
+    setLeaving(true)
+    window.setTimeout(action, motionDuration(REQUEST_EXIT_DURATION))
+  }
+
+  return (
+    <li
+      className={`room-screen__request${leaving ? ' room-screen__request--leaving' : ''}`}
+    >
+      <span className="room-screen__request-name">{name}</span>
+      <button
+        className="room-screen__request-action"
+        type="button"
+        onClick={() => handleAction(onAccept)}
+      >
+        принять
+      </button>
+      <button
+        className="room-screen__request-action room-screen__request-action--muted"
+        type="button"
+        onClick={() => handleAction(onReject)}
+      >
+        отклонить
+      </button>
+    </li>
+  )
 }
 
 export default function RoomScreen({ sessionId, onBack }) {
@@ -71,15 +109,18 @@ export default function RoomScreen({ sessionId, onBack }) {
         <section className="room-screen__summary" aria-label="Информация об аудитории">
           <span
             className={`room-screen__status room-screen__status--${STATUS_MODIFIERS[room.status]}`}
+            key={room.status}
             aria-label={STATUS_LABELS[room.status]}
             role="img"
           />
           <span className="room-screen__status-label">
             {STATUS_LABELS[room.status]}
           </span>
-          <span className="room-screen__count">
-            {room.occupantIds.length}/{room.capacity}
-          </span>
+          <RoomCount
+            className="room-screen__count"
+            value={room.occupantIds.length}
+            capacity={room.capacity}
+          />
         </section>
 
         {timerProgress !== null && (
@@ -93,7 +134,7 @@ export default function RoomScreen({ sessionId, onBack }) {
           >
             <span
               className="room-screen__timer-bar"
-              style={{ transform: `scaleX(${timerProgress})` }}
+              style={{ transform: `scaleX(${Math.max(timerProgress, 0.0001)})` }}
             />
           </div>
         )}
@@ -114,29 +155,16 @@ export default function RoomScreen({ sessionId, onBack }) {
             ) : (
               <ul className="room-screen__request-list">
                 {room.requests.map((requestUserId) => (
-                  <li className="room-screen__request" key={requestUserId}>
-                    <span className="room-screen__request-name">
-                      {getSessionName(state, requestUserId)}
-                    </span>
-                    <button
-                      className="room-screen__request-action"
-                      type="button"
-                      onClick={() =>
-                        acceptJoinRequest(sessionId, room.id, requestUserId)
-                      }
-                    >
-                      принять
-                    </button>
-                    <button
-                      className="room-screen__request-action room-screen__request-action--muted"
-                      type="button"
-                      onClick={() =>
-                        rejectJoinRequest(sessionId, room.id, requestUserId)
-                      }
-                    >
-                      отклонить
-                    </button>
-                  </li>
+                  <RequestItem
+                    key={requestUserId}
+                    name={getSessionName(state, requestUserId)}
+                    onAccept={() =>
+                      acceptJoinRequest(sessionId, room.id, requestUserId)
+                    }
+                    onReject={() =>
+                      rejectJoinRequest(sessionId, room.id, requestUserId)
+                    }
+                  />
                 ))}
               </ul>
             )}

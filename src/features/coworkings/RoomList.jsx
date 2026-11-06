@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ROOM_STATUS } from '../../data/auditoriums.js'
 import {
   joinAvailableRoom,
@@ -7,10 +7,15 @@ import {
   setSessionSearch,
   toggleSessionBlock,
 } from '../../state/actions.js'
+import { motionDuration, prefersReducedMotion } from '../../lib/motion.js'
 import { ROOM_MODE } from '../../state/store.js'
 import { selectRoomBlocks } from '../../state/selectors.js'
 import { useStore } from '../../state/useStore.js'
+import RoomCount from './RoomCount.jsx'
 import './coworkings.css'
+
+const FLIP_DURATION = 280
+const DIALOG_EXIT_DURATION = 140
 
 const STATUS_LABELS = {
   [ROOM_STATUS.FREE]: 'Свободное',
@@ -68,51 +73,65 @@ function RoomBlock({ block, sessionId, isWorking, onRoomAction }) {
         />
         <span id={headingId}>{block.title}</span>
       </button>
-      {!block.collapsed && (
-        <div className="room-block__scroll-frame">
-          <div
-            ref={scrollRef}
-            className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
-            id={`${headingId}-rooms`}
-          >
-            <ul className="room-block__rooms">
-              {block.rooms.map((room) => {
-                const isFull = room.occupantIds.length >= room.capacity
-                const hasRequested = room.requests.includes(sessionId)
+      <div
+        className={`room-block__content${block.collapsed ? '' : ' room-block__content--expanded'}`}
+        id={`${headingId}-rooms`}
+        aria-hidden={block.collapsed}
+        inert={block.collapsed || undefined}
+      >
+        <div className="room-block__content-inner">
+          <div className="room-block__scroll-frame">
+            <div
+              ref={scrollRef}
+              className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
+            >
+              <ul className="room-block__rooms">
+                {block.rooms.map((room, index) => {
+                  const isFull = room.occupantIds.length >= room.capacity
+                  const hasRequested = room.requests.includes(sessionId)
 
-                return (
-                  <li className="room-row" key={room.id}>
-                    <span
-                      className={`room-row__status room-row__status--${block.id}`}
-                      aria-label={STATUS_LABELS[room.status]}
-                      role="img"
-                    />
-                    <span className="room-row__name">{room.name}</span>
-                    <span className="room-row__count">
-                      {room.occupantIds.length}/{room.capacity}
-                    </span>
-                    <button
-                      className="room-row__action"
-                      type="button"
-                      disabled={
-                        isWorking ||
-                        isFull ||
-                        (room.status === ROOM_STATUS.BUSY && hasRequested)
-                      }
-                      onClick={() => onRoomAction(room)}
+                  return (
+                    <li
+                      className="room-row"
+                      key={room.id}
+                      data-room-id={room.id}
+                      style={{ '--row-index': Math.min(index, 7) }}
                     >
-                      {ROOM_ACTIONS[room.status]}
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
+                      <span
+                        className={`room-row__status room-row__status--${block.id}`}
+                        key={room.status}
+                        aria-label={STATUS_LABELS[room.status]}
+                        role="img"
+                      />
+                      <span className="room-row__name">{room.name}</span>
+                      <RoomCount
+                        className="room-row__count"
+                        value={room.occupantIds.length}
+                        capacity={room.capacity}
+                      />
+                      <button
+                        className="room-row__action"
+                        type="button"
+                        disabled={
+                          isWorking ||
+                          isFull ||
+                          (room.status === ROOM_STATUS.BUSY && hasRequested)
+                        }
+                        onClick={() => onRoomAction(room)}
+                      >
+                        {ROOM_ACTIONS[room.status]}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+            {showFade && (
+              <span className="room-block__fade" aria-hidden="true" />
+            )}
           </div>
-          {showFade && (
-            <span className="room-block__fade" aria-hidden="true" />
-          )}
         </div>
-      )}
+      </div>
     </section>
   )
 }
@@ -120,7 +139,62 @@ function RoomBlock({ block, sessionId, isWorking, onRoomAction }) {
 export default function RoomList({ sessionId }) {
   const state = useStore()
   const [roomToOccupy, setRoomToOccupy] = useState(null)
+  const [dialogClosing, setDialogClosing] = useState(false)
+  const listRef = useRef(null)
+  const rowRectsRef = useRef(null)
+  const dialogTimerRef = useRef(null)
   const session = state.sessions.find((item) => item.id === sessionId)
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(dialogTimerRef.current)
+    },
+    [],
+  )
+
+  useLayoutEffect(() => {
+    const container = listRef.current
+
+    if (!container) {
+      rowRectsRef.current = null
+      return
+    }
+
+    const rows = container.querySelectorAll('[data-room-id]')
+    const nextRects = new Map()
+
+    rows.forEach((row) => {
+      nextRects.set(row.dataset.roomId, row.getBoundingClientRect())
+    })
+
+    const previousRects = rowRectsRef.current
+    rowRectsRef.current = nextRects
+
+    if (!previousRects || prefersReducedMotion()) return
+
+    rows.forEach((row) => {
+      const nextRect = nextRects.get(row.dataset.roomId)
+      const previousRect = previousRects.get(row.dataset.roomId)
+
+      if (!previousRect || !nextRect || typeof row.animate !== 'function') return
+
+      const deltaX = previousRect.left - nextRect.left
+      const deltaY = previousRect.top - nextRect.top
+
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return
+
+      row.animate(
+        [
+          { transform: `translate(${deltaX}px, ${deltaY}px)` },
+          { transform: 'translate(0, 0)' },
+        ],
+        {
+          duration: FLIP_DURATION,
+          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+        },
+      )
+    })
+  })
 
   if (!session) return null
 
@@ -139,9 +213,24 @@ export default function RoomList({ sessionId }) {
     }
   }
 
+  function closeOccupyDialog(action) {
+    if (dialogClosing) return
+
+    setDialogClosing(true)
+    dialogTimerRef.current = window.setTimeout(() => {
+      setRoomToOccupy(null)
+      setDialogClosing(false)
+
+      if (action) action()
+    }, motionDuration(DIALOG_EXIT_DURATION))
+  }
+
   function chooseOccupyMode(mode) {
-    if (roomToOccupy) occupyRoom(sessionId, roomToOccupy.id, mode)
-    setRoomToOccupy(null)
+    const room = roomToOccupy
+
+    closeOccupyDialog(() => {
+      if (room) occupyRoom(sessionId, room.id, mode)
+    })
   }
 
   return (
@@ -161,7 +250,7 @@ export default function RoomList({ sessionId }) {
         onChange={(event) => setSessionSearch(sessionId, event.target.value)}
       />
 
-      <div className="room-list__blocks">
+      <div className="room-list__blocks" ref={listRef}>
         {blocks.map((block) => (
           <RoomBlock
             key={block.id}
@@ -174,9 +263,11 @@ export default function RoomList({ sessionId }) {
       </div>
 
       {roomToOccupy && (
-        <div className="room-dialog-backdrop">
+        <div
+          className={`room-dialog-backdrop${dialogClosing ? ' room-dialog-backdrop--closing' : ''}`}
+        >
           <section
-            className="room-dialog"
+            className={`room-dialog${dialogClosing ? ' room-dialog--closing' : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="room-dialog-title"
@@ -201,7 +292,7 @@ export default function RoomList({ sessionId }) {
             <button
               className="room-dialog__cancel"
               type="button"
-              onClick={() => setRoomToOccupy(null)}
+              onClick={() => closeOccupyDialog()}
             >
               Отмена
             </button>

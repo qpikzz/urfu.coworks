@@ -1,21 +1,49 @@
+import { useEffect, useState } from 'react'
+import { motionDuration } from '../../lib/motion.js'
 import { leaveRoom } from '../../state/actions.js'
 import { selectSessionRoom } from '../../state/selectors.js'
 import { useStore } from '../../state/useStore.js'
 import './coworkings.css'
 
+const BANNER_DURATION = 240
+
 export default function WorkBanner({ sessionId, onOpen }) {
   const state = useStore()
   const room = selectSessionRoom(state, sessionId)
+  const [visibleRoom, setVisibleRoom] = useState(room)
+  const [closing, setClosing] = useState(false)
 
-  if (!room) return null
+  useEffect(() => {
+    if (room) {
+      setVisibleRoom(room)
+      setClosing(false)
+      return undefined
+    }
+
+    if (!visibleRoom) return undefined
+
+    setClosing(true)
+    const timeoutId = window.setTimeout(() => {
+      setVisibleRoom(null)
+      setClosing(false)
+    }, motionDuration(BANNER_DURATION))
+
+    return () => window.clearTimeout(timeoutId)
+  }, [room, visibleRoom])
+
+  if (!visibleRoom) return null
 
   return (
-    <div className="work-banner" role="status" aria-live="polite">
+    <div
+      className={`work-banner${closing ? ' work-banner--closing' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       <button
         className="work-banner__open"
         type="button"
         onClick={onOpen}
-        aria-label={`Открыть экран аудитории ${room.name}`}
+        aria-label={`Открыть экран аудитории ${visibleRoom.name}`}
       >
         <svg
           className="work-banner__icon"
@@ -40,7 +68,9 @@ export default function WorkBanner({ sessionId, onOpen }) {
           />
           <circle cx="12" cy="7.75" r="1.1" fill="currentColor" />
         </svg>
-        <span className="work-banner__text">Вы работаете в {room.name}</span>
+        <span className="work-banner__text">
+          Вы работаете в {visibleRoom.name}
+        </span>
       </button>
       <button
         className="work-banner__leave"

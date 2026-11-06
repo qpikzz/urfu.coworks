@@ -27,12 +27,28 @@
 }
 
 .site-tabs {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
 }
 
+.site-tabs__indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: var(--radius-pill);
+  background-color: var(--surface-2);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    width var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
 .site-tabs__button {
+  position: relative;
+  z-index: 1;
   min-height: var(--tap-target);
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
@@ -42,8 +58,11 @@
 }
 
 .site-tabs__button[aria-current='page'] {
-  background-color: var(--surface-2);
   color: var(--text);
+}
+
+.tab-panel:not([hidden]) {
+  animation: panel-in var(--dur-base) var(--ease-out);
 }
 
 .site__main {
@@ -86,5 +105,15 @@
 
   .site__main {
     padding: var(--space-8);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

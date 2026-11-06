@@ -34,6 +34,12 @@
   background-color: var(--info-bg);
   color: var(--on-info);
   font-size: var(--font-size-14);
+  animation: banner-in var(--dur-base) var(--ease-out);
+}
+
+.work-banner--closing {
+  animation: banner-out var(--dur-base) var(--ease-in-out) forwards;
+  pointer-events: none;
 }
 
 .work-banner__open {
@@ -151,6 +157,11 @@
   box-shadow: 0 0 0.5rem var(--status-busy);
 }
 
+.room-screen__status,
+.room-row__status {
+  animation: status-pulse var(--dur-base) var(--ease-out);
+}
+
 .room-screen__status-label {
   min-width: 0;
   flex: 1 1 auto;
@@ -162,6 +173,11 @@
   color: var(--text-muted);
   font-size: var(--font-size-14);
   white-space: nowrap;
+}
+
+.room-count__value {
+  display: inline-block;
+  animation: count-in var(--dur-fast) var(--ease-out);
 }
 
 .room-screen__timer {
@@ -219,6 +235,11 @@
   font-size: var(--font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.room-screen__request--leaving {
+  animation: request-out var(--dur-fast) var(--ease-in-out) forwards;
+  pointer-events: none;
 }
 
 .room-screen__request-action {
@@ -316,6 +337,21 @@
   transform: rotate(45deg);
 }
 
+.room-block__content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-in-out);
+}
+
+.room-block__content--expanded {
+  grid-template-rows: 1fr;
+}
+
+.room-block__content-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .room-block__scroll-frame {
   position: relative;
 }
@@ -359,6 +395,8 @@
   padding: var(--space-2);
   border-radius: var(--radius-card);
   background-color: var(--surface-2);
+  animation: room-row-in var(--dur-base) var(--ease-out) backwards;
+  animation-delay: calc(var(--row-index, 0) * 30ms);
 }
 
 .room-row__status {
@@ -419,6 +457,12 @@
   place-items: center;
   padding: var(--space-4);
   background-color: var(--overlay);
+  animation: backdrop-in var(--dur-fast) var(--ease-out);
+}
+
+.room-dialog-backdrop--closing {
+  animation: backdrop-out var(--dur-fast) var(--ease-in-out) forwards;
+  pointer-events: none;
 }
 
 .room-dialog {
@@ -428,6 +472,11 @@
   padding: var(--space-4);
   border-radius: var(--radius-dialog);
   background-color: var(--surface-1);
+  animation: dialog-in var(--dur-base) var(--ease-out);
+}
+
+.room-dialog--closing {
+  animation: dialog-out var(--dur-fast) var(--ease-in-out) forwards;
 }
 
 .room-dialog__title {
@@ -444,4 +493,125 @@
 .room-dialog__cancel {
   border-color: var(--border);
   color: var(--text-muted);
+}
+
+@keyframes room-row-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes status-pulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes count-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes banner-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+@keyframes request-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdrop-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dialog-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
 }
