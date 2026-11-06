@@ -29,11 +29,18 @@ const ROOM_ACTIONS = {
   [ROOM_STATUS.BUSY]: 'Присоединиться',
 }
 
-function RoomBlock({ block, sessionId, isWorking, onRoomAction }) {
+function RoomBlock({
+  block,
+  sessionId,
+  searchQuery,
+  isWorking,
+  onRoomAction,
+}) {
   const scrollRef = useRef(null)
   const [showFade, setShowFade] = useState(false)
   const headingId = `room-block-${sessionId}-${block.id}`
-  const isLimited = block.rooms.length >= 6
+  const visibleRooms = block.rooms.filter((room) => room.matchesSearch !== false)
+  const isLimited = visibleRooms.length >= 6
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -52,87 +59,104 @@ function RoomBlock({ block, sessionId, isWorking, onRoomAction }) {
 
     updateFade()
     scrollElement.addEventListener('scroll', updateFade, { passive: true })
+    scrollElement.addEventListener('transitionend', updateFade)
 
     return () => {
       scrollElement.removeEventListener('scroll', updateFade)
+      scrollElement.removeEventListener('transitionend', updateFade)
     }
-  }, [block.collapsed, block.rooms.length, isLimited])
+  }, [block.collapsed, isLimited, searchQuery, visibleRooms.length])
 
   return (
-    <section className="room-block">
-      <button
-        className="room-block__toggle"
-        type="button"
-        aria-expanded={!block.collapsed}
-        aria-controls={`${headingId}-rooms`}
-        onClick={() => toggleSessionBlock(sessionId, block.id)}
-      >
-        <span
-          className={`room-block__chevron${block.collapsed ? '' : ' room-block__chevron--expanded'}`}
-          aria-hidden="true"
-        />
-        <span id={headingId}>{block.title}</span>
-      </button>
-      <div
-        className={`room-block__content${block.collapsed ? '' : ' room-block__content--expanded'}`}
-        id={`${headingId}-rooms`}
-        aria-hidden={block.collapsed}
-        inert={block.collapsed || undefined}
-      >
-        <div className="room-block__content-inner">
-          <div className="room-block__scroll-frame">
-            <div
-              ref={scrollRef}
-              className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
-            >
-              <ul className="room-block__rooms">
-                {block.rooms.map((room, index) => {
-                  const isFull = room.occupantIds.length >= room.capacity
-                  const hasRequested = room.requests.includes(sessionId)
+    <div
+      className={`room-block-slot${block.hidden ? ' room-block-slot--filtered' : ''}`}
+      aria-hidden={block.hidden || undefined}
+      inert={block.hidden || undefined}
+    >
+      <div className="room-block-clip">
+        <section className="room-block">
+          <button
+            className="room-block__toggle"
+            type="button"
+            aria-expanded={!block.collapsed}
+            aria-controls={`${headingId}-rooms`}
+            onClick={() => toggleSessionBlock(sessionId, block.id)}
+          >
+            <span
+              className={`room-block__chevron${block.collapsed ? '' : ' room-block__chevron--expanded'}`}
+              aria-hidden="true"
+            />
+            <span id={headingId}>{block.title}</span>
+          </button>
+          <div
+            className={`room-block__content${block.collapsed ? '' : ' room-block__content--expanded'}`}
+            id={`${headingId}-rooms`}
+            aria-hidden={block.collapsed}
+            inert={block.collapsed || undefined}
+          >
+            <div className="room-block__content-inner">
+              <div className="room-block__scroll-frame">
+                <div
+                  ref={scrollRef}
+                  className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
+                >
+                  <ul className="room-block__rooms">
+                    {block.rooms.map((room, index) => {
+                      const isFull = room.occupantIds.length >= room.capacity
+                      const hasRequested = room.requests.includes(sessionId)
+                      const isFiltered = room.matchesSearch === false
 
-                  return (
-                    <li
-                      className="room-row"
-                      key={room.id}
-                      data-room-id={room.id}
-                      style={{ '--row-index': Math.min(index, 7) }}
-                    >
-                      <span
-                        className={`room-row__status room-row__status--${block.id}`}
-                        key={room.status}
-                        aria-label={STATUS_LABELS[room.status]}
-                        role="img"
-                      />
-                      <span className="room-row__name">{room.name}</span>
-                      <RoomCount
-                        className="room-row__count"
-                        value={room.occupantIds.length}
-                        capacity={room.capacity}
-                      />
-                      <button
-                        className="room-row__action"
-                        type="button"
-                        disabled={
-                          isWorking ||
-                          isFull ||
-                          (room.status === ROOM_STATUS.BUSY && hasRequested)
-                        }
-                        onClick={() => onRoomAction(room)}
-                      >
-                        {ROOM_ACTIONS[room.status]}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+                      return (
+                        <li
+                          className={`room-row-slot${isFiltered ? ' room-row-slot--filtered' : ''}`}
+                          key={room.id}
+                          data-room-id={room.id}
+                          style={{ '--row-index': Math.min(index, 7) }}
+                          aria-hidden={isFiltered || undefined}
+                          inert={isFiltered || undefined}
+                        >
+                          <div className="room-row-clip">
+                            <div className="room-row">
+                              <span
+                                className={`room-row__status room-row__status--${block.id}`}
+                                key={room.status}
+                                aria-label={STATUS_LABELS[room.status]}
+                                role="img"
+                              />
+                              <span className="room-row__name">{room.name}</span>
+                              <RoomCount
+                                className="room-row__count"
+                                value={room.occupantIds.length}
+                                capacity={room.capacity}
+                              />
+                              <button
+                                className="room-row__action"
+                                type="button"
+                                disabled={
+                                  isWorking ||
+                                  isFull ||
+                                  (room.status === ROOM_STATUS.BUSY && hasRequested)
+                                }
+                                onClick={() => onRoomAction(room)}
+                              >
+                                {ROOM_ACTIONS[room.status]}
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+                {showFade && (
+                  <span className="room-block__fade" aria-hidden="true" />
+                )}
+              </div>
             </div>
-            {showFade && (
-              <span className="room-block__fade" aria-hidden="true" />
-            )}
           </div>
-        </div>
+        </section>
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -142,6 +166,7 @@ export default function RoomList({ sessionId }) {
   const [dialogClosing, setDialogClosing] = useState(false)
   const listRef = useRef(null)
   const rowRectsRef = useRef(null)
+  const queryRef = useRef(null)
   const dialogTimerRef = useRef(null)
   const session = state.sessions.find((item) => item.id === sessionId)
 
@@ -168,9 +193,13 @@ export default function RoomList({ sessionId }) {
     })
 
     const previousRects = rowRectsRef.current
-    rowRectsRef.current = nextRects
+    const currentQuery = session?.searchQuery ?? ''
+    const queryChanged = queryRef.current !== currentQuery
 
-    if (!previousRects || prefersReducedMotion()) return
+    rowRectsRef.current = nextRects
+    queryRef.current = currentQuery
+
+    if (!previousRects || queryChanged || prefersReducedMotion()) return
 
     rows.forEach((row) => {
       const nextRect = nextRects.get(row.dataset.roomId)
@@ -198,7 +227,7 @@ export default function RoomList({ sessionId }) {
 
   if (!session) return null
 
-  const blocks = selectRoomBlocks(state, sessionId)
+  const blocks = selectRoomBlocks(state, sessionId, { includeFiltered: true })
   const isWorking = state.auditoriums.some((room) =>
     room.occupantIds.includes(sessionId),
   )
@@ -256,6 +285,7 @@ export default function RoomList({ sessionId }) {
             key={block.id}
             block={block}
             sessionId={sessionId}
+            searchQuery={session.searchQuery}
             isWorking={isWorking}
             onRoomAction={performRoomAction}
           />

@@ -43,23 +43,27 @@ function RequestItem({ name, onAccept, onReject }) {
 
   return (
     <li
-      className={`room-screen__request${leaving ? ' room-screen__request--leaving' : ''}`}
+      className={`room-screen__request-item${leaving ? ' room-screen__request-item--leaving' : ''}`}
     >
-      <span className="room-screen__request-name">{name}</span>
-      <button
-        className="room-screen__request-action"
-        type="button"
-        onClick={() => handleAction(onAccept)}
-      >
-        принять
-      </button>
-      <button
-        className="room-screen__request-action room-screen__request-action--muted"
-        type="button"
-        onClick={() => handleAction(onReject)}
-      >
-        отклонить
-      </button>
+      <div className="room-screen__request-clip">
+        <div className="room-screen__request">
+          <span className="room-screen__request-name">{name}</span>
+          <button
+            className="room-screen__request-action"
+            type="button"
+            onClick={() => handleAction(onAccept)}
+          >
+            принять
+          </button>
+          <button
+            className="room-screen__request-action room-screen__request-action--muted"
+            type="button"
+            onClick={() => handleAction(onReject)}
+          >
+            отклонить
+          </button>
+        </div>
+      </div>
     </li>
   )
 }

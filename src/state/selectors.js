@@ -55,17 +55,39 @@ export function selectSessionRooms(state, sessionId) {
   return sortRooms(filterRooms(rooms, session.searchQuery))
 }
 
-export function selectRoomBlocks(state, sessionId) {
+export function selectRoomBlocks(
+  state,
+  sessionId,
+  { includeFiltered = false } = {},
+) {
   const session = state.sessions.find((item) => item.id === sessionId)
 
   if (!session) return []
 
-  const rooms = selectSessionRooms(state, sessionId)
+  const rooms = sortRooms(
+    state.auditoriums.filter(
+      (room) => room.universityId === session.universityId,
+    ),
+  )
   const isSearching = normalizeSearchQuery(session.searchQuery) !== ''
 
-  return ROOM_BLOCKS.map((block) => ({
-    ...block,
-    collapsed: Boolean(session.collapsedBlocks[block.id]),
-    rooms: rooms.filter((room) => room.status === block.status),
-  })).filter((block) => !isSearching || block.rooms.length > 0)
+  return ROOM_BLOCKS.map((block) => {
+    const blockRooms = rooms.filter((room) => room.status === block.status)
+    const matchedRooms = isSearching
+      ? blockRooms.filter((room) => matchesRoomSearch(room, session.searchQuery))
+      : blockRooms
+
+    return {
+      ...block,
+      collapsed: Boolean(session.collapsedBlocks[block.id]),
+      hidden: isSearching && matchedRooms.length === 0,
+      rooms: includeFiltered
+        ? blockRooms.map((room) => ({
+            ...room,
+            matchesSearch:
+              !isSearching || matchesRoomSearch(room, session.searchQuery),
+          }))
+        : matchedRooms,
+    }
+  }).filter((block) => includeFiltered || !isSearching || block.rooms.length > 0)
 }

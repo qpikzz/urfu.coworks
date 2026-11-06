@@ -136,10 +136,25 @@ button {
   border: 0;
   background: none;
   cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 button:disabled {
   cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    filter: brightness(1.08);
+  }
 }
 
 a {

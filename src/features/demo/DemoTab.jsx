@@ -62,7 +62,7 @@ export default function DemoTab({ hidden }) {
               onBack={() => setRoomScreenOpen(false)}
             />
           ) : (
-            <>
+            <div className="app-screen" key={session.id}>
               <AppHeader
                 universityId={session.universityId}
                 onUniversityChange={(universityId) =>
@@ -74,7 +74,7 @@ export default function DemoTab({ hidden }) {
                 onOpen={() => setRoomScreenOpen(true)}
               />
               <RoomList sessionId={session.id} />
-            </>
+            </div>
           )}
         </PhoneFrame>
       </div>

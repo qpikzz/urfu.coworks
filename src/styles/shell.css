@@ -6,6 +6,7 @@
 
 .site-header {
   border-bottom: 1px solid var(--border);
+  animation: shell-in var(--dur-slow) var(--ease-out) both;
 }
 
 .site-header__inner {
@@ -111,9 +112,23 @@
 @keyframes panel-in {
   from {
     opacity: 0;
+    translate: 0 8px;
   }
 
   to {
     opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes shell-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
