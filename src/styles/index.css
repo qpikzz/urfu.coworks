@@ -23,6 +23,7 @@
   --font-size-12: 0.75rem;
   --font-size-14: 0.875rem;
   --font-size-16: 1rem;
+  --font-size-18: 1.125rem;
   --font-size-20: 1.25rem;
   --font-size-24: 1.5rem;
   --font-size-32: 2rem;
@@ -43,13 +44,14 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  --radius-card: 20px;
+  --radius-card: 16px;
+  --radius-group: 20px;
   --radius-pill: 999px;
   --radius-dialog: 24px;
   --radius-phone: 40px;
 
   --tap-target: 2.75rem;
-  --room-row-height: 4rem;
+  --room-row-height: 3.75rem;
   --room-list-height: calc(var(--room-row-height) * 5.5 + var(--space-2) * 5);
 
   --dur-fast: 140ms;

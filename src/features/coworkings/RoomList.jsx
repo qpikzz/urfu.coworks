@@ -270,14 +270,38 @@ export default function RoomList({ sessionId }) {
       <label className="room-list__search-label" htmlFor="room-search">
         Поиск аудиторий
       </label>
-      <input
-        className="room-list__search"
-        id="room-search"
-        type="search"
-        value={session.searchQuery}
-        placeholder="Поиск"
-        onChange={(event) => setSessionSearch(sessionId, event.target.value)}
-      />
+      <div className="room-list__search-field">
+        <svg
+          className="room-list__search-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <circle
+            cx="10.8"
+            cy="10.8"
+            r="6.8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <path
+            d="m16 16 4 4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+        <input
+          className="room-list__search"
+          id="room-search"
+          type="search"
+          value={session.searchQuery}
+          placeholder="Поиск"
+          onChange={(event) => setSessionSearch(sessionId, event.target.value)}
+        />
+      </div>
 
       <div className="room-list__blocks" ref={listRef}>
         {blocks.map((block) => (
