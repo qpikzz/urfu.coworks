@@ -18,6 +18,11 @@
 
   --phone-frame: #0f1117;
   --overlay: rgba(15, 17, 23, 0.6);
+  --header-bg: rgba(34, 37, 44, 0.72);
+  --glow-accent: rgba(60, 107, 211, 0.12);
+  --shadow-phone:
+    0 1.5rem 3rem rgba(0, 0, 0, 0.45),
+    0 0 3rem var(--glow-accent);
 
   --font-base: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-size-12: 0.75rem;
@@ -27,10 +32,12 @@
   --font-size-20: 1.25rem;
   --font-size-24: 1.5rem;
   --font-size-32: 2rem;
+  --font-size-page-title: clamp(1.75rem, 4vw, 2.5rem);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --line-height-tight: 1.4;
+  --line-height-title: 1.25;
   --line-height-base: 1.5;
 
   --space-1: 0.25rem;
@@ -50,15 +57,31 @@
   --radius-dialog: 24px;
   --radius-phone: 40px;
 
+  --border-width: 1px;
+  --border-width-strong: 2px;
+  --header-blur: 14px;
+  --status-bar-height: 1.875rem;
+
   --tap-target: 2.75rem;
   --room-row-height: 3.75rem;
   --room-list-height: calc(var(--room-row-height) * 5.5 + var(--space-2) * 5);
 
+  --slide-ratio: 16 / 9;
+  --site-header-height: 4.25rem;
+  --site-footer-height: 4.375rem;
+
   --dur-fast: 140ms;
   --dur-base: 240ms;
   --dur-slow: 360ms;
+  --dur-app: 170ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --site-header-height: 4.75rem;
+  }
 }
 
 *,

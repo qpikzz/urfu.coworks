@@ -21,6 +21,45 @@ function PhoneStatusBar() {
       <time className="phone-status-bar__time" dateTime={now.toISOString()}>
         {time}
       </time>
+      <div className="phone-status-bar__icons" aria-hidden="true">
+        <svg
+          className="phone-status-bar__icon"
+          viewBox="0 0 24 24"
+          focusable="false"
+        >
+          <path
+            d="M4 9.5a12 12 0 0 1 16 0M7 13a8 8 0 0 1 10 0M10 16.5a4 4 0 0 1 4 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <circle cx="12" cy="19.5" r="1" fill="currentColor" />
+        </svg>
+        <svg
+          className="phone-status-bar__icon"
+          viewBox="0 0 24 24"
+          focusable="false"
+        >
+          <rect
+            x="3"
+            y="8"
+            width="15"
+            height="8"
+            rx="2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          />
+          <rect x="5" y="10" width="9" height="4" rx="1" fill="currentColor" />
+          <path
+            d="M20 11v2"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,4 @@
-import { useState } from 'react'
 import { ROOM_STATUS } from '../../data/auditoriums.js'
-import { motionDuration } from '../../lib/motion.js'
 import {
   acceptJoinRequest,
   leaveRoom,
@@ -11,8 +9,6 @@ import { FIVE_MINUTES } from '../../state/timers.js'
 import { useStore } from '../../state/useStore.js'
 import RoomCount from './RoomCount.jsx'
 import './coworkings.css'
-
-const REQUEST_EXIT_DURATION = 140
 
 const STATUS_LABELS = {
   [ROOM_STATUS.FREE]: 'Свободное',
@@ -32,33 +28,22 @@ function getSessionName(state, sessionId) {
 }
 
 function RequestItem({ name, onAccept, onReject }) {
-  const [leaving, setLeaving] = useState(false)
-
-  function handleAction(action) {
-    if (leaving) return
-
-    setLeaving(true)
-    window.setTimeout(action, motionDuration(REQUEST_EXIT_DURATION))
-  }
-
   return (
-    <li
-      className={`room-screen__request-item${leaving ? ' room-screen__request-item--leaving' : ''}`}
-    >
+    <li className="room-screen__request-item">
       <div className="room-screen__request-clip">
         <div className="room-screen__request">
           <span className="room-screen__request-name">{name}</span>
           <button
             className="room-screen__request-action"
             type="button"
-            onClick={() => handleAction(onAccept)}
+            onClick={onAccept}
           >
             принять
           </button>
           <button
             className="room-screen__request-action room-screen__request-action--muted"
             type="button"
-            onClick={() => handleAction(onReject)}
+            onClick={onReject}
           >
             отклонить
           </button>
@@ -68,7 +53,7 @@ function RequestItem({ name, onAccept, onReject }) {
   )
 }
 
-export default function RoomScreen({ sessionId, onBack }) {
+export default function RoomScreen({ sessionId, onBack, entering }) {
   const state = useStore()
   const room = selectSessionRoom(state, sessionId)
 
@@ -86,7 +71,7 @@ export default function RoomScreen({ sessionId, onBack }) {
   }
 
   return (
-    <div className="room-screen">
+    <div className={`room-screen${entering ? ' room-screen--enter' : ''}`}>
       <header className="room-screen__header">
         <button className="room-screen__back" type="button" onClick={onBack}>
           <svg
@@ -113,7 +98,6 @@ export default function RoomScreen({ sessionId, onBack }) {
         <section className="room-screen__summary" aria-label="Информация об аудитории">
           <span
             className={`room-screen__status room-screen__status--${STATUS_MODIFIERS[room.status]}`}
-            key={room.status}
             aria-label={STATUS_LABELS[room.status]}
             role="img"
           />

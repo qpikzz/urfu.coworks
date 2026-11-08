@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ROOM_STATUS } from '../../data/auditoriums.js'
 import {
   joinAvailableRoom,
@@ -7,15 +7,12 @@ import {
   setSessionSearch,
   toggleSessionBlock,
 } from '../../state/actions.js'
-import { motionDuration, prefersReducedMotion } from '../../lib/motion.js'
+import { appMotionDuration } from '../../lib/motion.js'
 import { ROOM_MODE } from '../../state/store.js'
 import { selectRoomBlocks } from '../../state/selectors.js'
 import { useStore } from '../../state/useStore.js'
 import RoomCount from './RoomCount.jsx'
 import './coworkings.css'
-
-const FLIP_DURATION = 280
-const DIALOG_EXIT_DURATION = 140
 
 const STATUS_LABELS = {
   [ROOM_STATUS.FREE]: 'Свободное',
@@ -101,7 +98,7 @@ function RoomBlock({
                   className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
                 >
                   <ul className="room-block__rooms">
-                    {block.rooms.map((room, index) => {
+                    {block.rooms.map((room) => {
                       const isFull = room.occupantIds.length >= room.capacity
                       const hasRequested = room.requests.includes(sessionId)
                       const isFiltered = room.matchesSearch === false
@@ -110,8 +107,6 @@ function RoomBlock({
                         <li
                           className={`room-row-slot${isFiltered ? ' room-row-slot--filtered' : ''}`}
                           key={room.id}
-                          data-room-id={room.id}
-                          style={{ '--row-index': Math.min(index, 7) }}
                           aria-hidden={isFiltered || undefined}
                           inert={isFiltered || undefined}
                         >
@@ -119,7 +114,6 @@ function RoomBlock({
                             <div className="room-row">
                               <span
                                 className={`room-row__status room-row__status--${block.id}`}
-                                key={room.status}
                                 aria-label={STATUS_LABELS[room.status]}
                                 role="img"
                               />
@@ -164,9 +158,6 @@ export default function RoomList({ sessionId }) {
   const state = useStore()
   const [roomToOccupy, setRoomToOccupy] = useState(null)
   const [dialogClosing, setDialogClosing] = useState(false)
-  const listRef = useRef(null)
-  const rowRectsRef = useRef(null)
-  const queryRef = useRef(null)
   const dialogTimerRef = useRef(null)
   const session = state.sessions.find((item) => item.id === sessionId)
 
@@ -176,54 +167,6 @@ export default function RoomList({ sessionId }) {
     },
     [],
   )
-
-  useLayoutEffect(() => {
-    const container = listRef.current
-
-    if (!container) {
-      rowRectsRef.current = null
-      return
-    }
-
-    const rows = container.querySelectorAll('[data-room-id]')
-    const nextRects = new Map()
-
-    rows.forEach((row) => {
-      nextRects.set(row.dataset.roomId, row.getBoundingClientRect())
-    })
-
-    const previousRects = rowRectsRef.current
-    const currentQuery = session?.searchQuery ?? ''
-    const queryChanged = queryRef.current !== currentQuery
-
-    rowRectsRef.current = nextRects
-    queryRef.current = currentQuery
-
-    if (!previousRects || queryChanged || prefersReducedMotion()) return
-
-    rows.forEach((row) => {
-      const nextRect = nextRects.get(row.dataset.roomId)
-      const previousRect = previousRects.get(row.dataset.roomId)
-
-      if (!previousRect || !nextRect || typeof row.animate !== 'function') return
-
-      const deltaX = previousRect.left - nextRect.left
-      const deltaY = previousRect.top - nextRect.top
-
-      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return
-
-      row.animate(
-        [
-          { transform: `translate(${deltaX}px, ${deltaY}px)` },
-          { transform: 'translate(0, 0)' },
-        ],
-        {
-          duration: FLIP_DURATION,
-          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-        },
-      )
-    })
-  })
 
   if (!session) return null
 
@@ -251,7 +194,7 @@ export default function RoomList({ sessionId }) {
       setDialogClosing(false)
 
       if (action) action()
-    }, motionDuration(DIALOG_EXIT_DURATION))
+    }, appMotionDuration())
   }
 
   function chooseOccupyMode(mode) {
@@ -303,7 +246,7 @@ export default function RoomList({ sessionId }) {
         />
       </div>
 
-      <div className="room-list__blocks" ref={listRef}>
+      <div className="room-list__blocks">
         {blocks.map((block) => (
           <RoomBlock
             key={block.id}

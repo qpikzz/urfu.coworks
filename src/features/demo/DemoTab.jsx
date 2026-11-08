@@ -24,10 +24,18 @@ export default function DemoTab({ hidden }) {
   const room = selectSessionRoom(state, session.id)
   const [roomScreenOpen, setRoomScreenOpen] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [introDone, setIntroDone] = useState(false)
 
   useEffect(() => {
     if (!room) setRoomScreenOpen(false)
   }, [room])
+
+  useEffect(() => {
+    if (hidden || introDone) return undefined
+
+    const timeoutId = window.setTimeout(() => setIntroDone(true), 500)
+    return () => window.clearTimeout(timeoutId)
+  }, [hidden, introDone])
 
   function chooseSession(sessionId) {
     setSelectedSessionId(sessionId)
@@ -37,7 +45,7 @@ export default function DemoTab({ hidden }) {
   return (
     <section
       id="panel-demo"
-      className="tab-panel tab-panel--demo demo-layout"
+      className={`tab-panel tab-panel--demo demo-layout${introDone ? '' : ' demo-layout--intro'}`}
       aria-labelledby="tab-demo"
       hidden={hidden}
     >
@@ -60,6 +68,7 @@ export default function DemoTab({ hidden }) {
             <RoomScreen
               sessionId={session.id}
               onBack={() => setRoomScreenOpen(false)}
+              entering
             />
           ) : (
             <div className="app-screen" key={session.id}>

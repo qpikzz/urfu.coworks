@@ -14,7 +14,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('presentation')
 
   return (
-    <div className={`site${activeTab === 'demo' ? ' site--demo' : ''}`}>
+    <div className={`site${activeTab === 'demo' ? ' site--demo' : ' site--presentation'}`}>
       <SiteHeader
         tabs={TABS}
         activeTab={activeTab}

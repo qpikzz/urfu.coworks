@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import { PRESENTATION_SLIDES } from '../../data/slides.js'
 import '../../styles/presentation.css'
 
-const AUTHOR_URL = 'https://github.com/qpikzz'
 const SWIPE_THRESHOLD = 48
 
 function ArrowIcon({ direction }) {
@@ -193,12 +192,6 @@ export default function PresentationTab({ hidden }) {
             <ArrowIcon direction="next" />
           </button>
         </div>
-
-        <p className="slider__author">
-          <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer">
-            By Nikita Shvedov
-          </a>
-        </p>
       </div>
     </section>
   )

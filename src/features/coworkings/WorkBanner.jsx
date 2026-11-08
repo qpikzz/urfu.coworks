@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import { motionDuration } from '../../lib/motion.js'
+import { appMotionDuration } from '../../lib/motion.js'
 import { leaveRoom } from '../../state/actions.js'
 import { selectSessionRoom } from '../../state/selectors.js'
 import { useStore } from '../../state/useStore.js'
 import './coworkings.css'
-
-const BANNER_DURATION = 240
 
 export default function WorkBanner({ sessionId, onOpen }) {
   const state = useStore()
@@ -26,7 +24,7 @@ export default function WorkBanner({ sessionId, onOpen }) {
     const timeoutId = window.setTimeout(() => {
       setVisibleRoom(null)
       setClosing(false)
-    }, motionDuration(BANNER_DURATION))
+    }, appMotionDuration())
 
     return () => window.clearTimeout(timeoutId)
   }, [room, visibleRoom])
