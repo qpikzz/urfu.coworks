@@ -37,7 +37,7 @@ function RoomBlock({
   const [showFade, setShowFade] = useState(false)
   const headingId = `room-block-${sessionId}-${block.id}`
   const visibleRooms = block.rooms.filter((room) => room.matchesSearch !== false)
-  const isLimited = visibleRooms.length >= 6
+  const isLimited = visibleRooms.length > 6
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -47,6 +47,8 @@ function RoomBlock({
       return undefined
     }
 
+    let frameId = 0
+
     function updateFade() {
       const hasMoreContent =
         scrollElement.scrollTop + scrollElement.clientHeight <
@@ -54,13 +56,38 @@ function RoomBlock({
       setShowFade(hasMoreContent)
     }
 
+    function scheduleFadeUpdate() {
+      if (frameId) return
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0
+        updateFade()
+      })
+    }
+
     updateFade()
-    scrollElement.addEventListener('scroll', updateFade, { passive: true })
-    scrollElement.addEventListener('transitionend', updateFade)
+    scrollElement.addEventListener('scroll', scheduleFadeUpdate, {
+      passive: true,
+    })
+    window.addEventListener('resize', scheduleFadeUpdate)
+
+    let observer
+
+    if (typeof ResizeObserver === 'function') {
+      observer = new ResizeObserver(scheduleFadeUpdate)
+      observer.observe(scrollElement)
+
+      if (scrollElement.firstElementChild) {
+        observer.observe(scrollElement.firstElementChild)
+      }
+    }
 
     return () => {
-      scrollElement.removeEventListener('scroll', updateFade)
-      scrollElement.removeEventListener('transitionend', updateFade)
+      if (frameId) window.cancelAnimationFrame(frameId)
+
+      scrollElement.removeEventListener('scroll', scheduleFadeUpdate)
+      window.removeEventListener('resize', scheduleFadeUpdate)
+      if (observer) observer.disconnect()
     }
   }, [block.collapsed, isLimited, searchQuery, visibleRooms.length])
 
@@ -96,6 +123,11 @@ function RoomBlock({
                 <div
                   ref={scrollRef}
                   className={`room-block__scroll${isLimited ? ' room-block__scroll--limited' : ''}`}
+                  tabIndex={isLimited ? 0 : undefined}
+                  role={isLimited ? 'group' : undefined}
+                  aria-label={
+                    isLimited ? `Аудитории: ${block.title}` : undefined
+                  }
                 >
                   <ul className="room-block__rooms">
                     {block.rooms.map((room) => {
@@ -206,7 +238,11 @@ export default function RoomList({ sessionId }) {
   }
 
   return (
-    <section className="room-list" aria-labelledby="room-list-title">
+    <section
+      className="room-list"
+      tabIndex={0}
+      aria-label="Список коворкингов"
+    >
       <h2 className="room-list__title" id="room-list-title">
         Коворкинги
       </h2>

@@ -301,6 +301,7 @@
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 var(--space-3) var(--space-4);
   scrollbar-width: none;
 }
@@ -442,16 +443,18 @@
 
 .room-block__scroll {
   overflow-y: visible;
+  overscroll-behavior: auto;
+  scrollbar-width: none;
+}
+
+.room-block__scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .room-block__scroll--limited {
   max-height: var(--room-list-height);
   overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.room-block__scroll--limited::-webkit-scrollbar {
-  display: none;
+  overscroll-behavior: auto;
 }
 
 .room-block__rooms {
