@@ -1,24 +1,24 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useLayoutEffect, useRef, useState } from 'react'
+import { useVirtualClockMinute } from '../../state/useStore.js'
 
 const LOGICAL_WIDTH = 360
 const LOGICAL_HEIGHT = 780
+const MINUTE_MS = 60 * 1000
 
-function PhoneStatusBar() {
-  const [now, setNow] = useState(() => new Date())
-  const time = new Intl.DateTimeFormat('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).format(now)
+const TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(new Date()), 60_000)
-    return () => window.clearInterval(intervalId)
-  }, [])
+const PhoneStatusBar = memo(function PhoneStatusBar() {
+  const minute = useVirtualClockMinute()
+  const clock = new Date(minute * MINUTE_MS)
+  const time = TIME_FORMATTER.format(clock)
 
   return (
-    <div className="phone-status-bar">
-      <time className="phone-status-bar__time" dateTime={now.toISOString()}>
+    <div className="phone-status-bar" aria-hidden="true">
+      <time className="phone-status-bar__time" dateTime={clock.toISOString()}>
         {time}
       </time>
       <div className="phone-status-bar__icons" aria-hidden="true">
@@ -62,7 +62,7 @@ function PhoneStatusBar() {
       </div>
     </div>
   )
-}
+})
 
 export default function PhoneFrame({ children }) {
   const screenRef = useRef(null)
