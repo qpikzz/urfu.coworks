@@ -1,9 +1,9 @@
 import { memo, useLayoutEffect, useRef, useState } from 'react'
+import { MINUTE_MS } from '../../config.js'
 import { useVirtualClockMinute } from '../../state/useStore.js'
 
 const LOGICAL_WIDTH = 360
 const LOGICAL_HEIGHT = 780
-const MINUTE_MS = 60 * 1000
 
 const TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
   hour: '2-digit',

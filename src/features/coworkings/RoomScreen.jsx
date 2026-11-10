@@ -5,7 +5,8 @@ import {
   rejectJoinRequest,
 } from '../../state/actions.js'
 import { selectSessionRoom } from '../../state/selectors.js'
-import { FIVE_MINUTES } from '../../state/timers.js'
+import { getNow } from '../../state/virtualClock.js'
+import { FULL_ROOM_CONFIRMATION_MS } from '../../config.js'
 import { useStore } from '../../state/useStore.js'
 import RoomCount from './RoomCount.jsx'
 import './coworkings.css'
@@ -60,10 +61,17 @@ export default function RoomScreen({ sessionId, onBack, entering }) {
   if (!room) return null
 
   const isMain = room.mainUserId === sessionId
+  const now = getNow()
+  const timerRemaining =
+    room.fullTimerEndsAt == null ? null : Math.max(0, room.fullTimerEndsAt - now)
   const timerProgress =
-    room.fullTimerEndsAt == null
+    timerRemaining === null
       ? null
-      : Math.max(0, Math.min(1, (room.fullTimerEndsAt - state.time.now) / FIVE_MINUTES))
+      : Math.min(1, timerRemaining / FULL_ROOM_CONFIRMATION_MS)
+  const timerDuration =
+    timerRemaining === null
+      ? null
+      : Math.max(0.001, timerRemaining / state.time.speed / 1000)
 
   function handleLeave() {
     leaveRoom(sessionId)
@@ -106,12 +114,12 @@ export default function RoomScreen({ sessionId, onBack, entering }) {
           </span>
           <RoomCount
             className="room-screen__count"
-            value={room.occupantIds.length}
+            value={room.occupants.length}
             capacity={room.capacity}
           />
         </section>
 
-        {timerProgress !== null && (
+        {timerDuration !== null && (
           <div
             className="room-screen__timer"
             role="progressbar"
@@ -121,8 +129,9 @@ export default function RoomScreen({ sessionId, onBack, entering }) {
             aria-valuenow={Math.round(timerProgress * 100)}
           >
             <span
+              key={`${room.id}-${room.fullTimerEndsAt}-${state.time.speed}`}
               className="room-screen__timer-bar"
-              style={{ transform: `scaleX(${Math.max(timerProgress, 0.0001)})` }}
+              style={{ animationDuration: `${timerDuration}s` }}
             />
           </div>
         )}

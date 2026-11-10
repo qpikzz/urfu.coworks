@@ -1,29 +1,44 @@
+import { FULL_ROOM_MIN_OCCUPANTS } from '../config.js'
 import { ROOM_STATUS } from '../data/auditoriums.js'
-import { ROOM_MODE, getState, setState } from './store.js'
+import { applyDummyDecision, getParticipantEventAt } from './sessionModel.js'
+import { ROOM_MODE, getState, setState, subscribe } from './store.js'
 import { leave } from './transitions.js'
-import { THIRTY_MINUTES, TIME_SPEEDS, TWO_HOURS } from './timers.js'
+import {
+  getNow,
+  getSpeed,
+  setSpeed as setClockSpeed,
+  startClock,
+  stopClock,
+} from './virtualClock.js'
 
-const TICK_INTERVAL = 100
+let eventTimeoutId = null
+let unsubscribeStore = null
+let started = false
 
-let intervalId = null
-let lastRealNow = Date.now()
+function decideDueDummies(state, now) {
+  let changed = false
 
-function findSessionRoom(state, sessionId) {
-  return state.auditoriums.find((room) =>
-    room.occupantIds.includes(sessionId),
-  )
+  const auditoriums = state.auditoriums.map((room) => {
+    let roomChanged = false
+
+    const occupants = room.occupants.map((participant) => {
+      const nextParticipant = applyDummyDecision(participant, now)
+
+      if (nextParticipant !== participant) roomChanged = true
+
+      return nextParticipant
+    })
+
+    if (!roomChanged) return room
+
+    changed = true
+    return { ...room, occupants }
+  })
+
+  return changed ? { ...state, auditoriums } : state
 }
 
-function updateSession(state, sessionId, update) {
-  return {
-    ...state,
-    sessions: state.sessions.map((session) =>
-      session.id === sessionId ? { ...session, ...update } : session,
-    ),
-  }
-}
-
-function processRoomTimers(state, now) {
+function confirmFullTimers(state, now) {
   let changed = false
 
   const auditoriums = state.auditoriums.map((room) => {
@@ -31,116 +46,152 @@ function processRoomTimers(state, now) {
 
     changed = true
 
-    if (room.status !== ROOM_STATUS.BUSY || room.occupantIds.length >= 2) {
-      return { ...room, fullTimerEndsAt: null }
+    if (
+      room.status === ROOM_STATUS.BUSY &&
+      room.occupants.length < FULL_ROOM_MIN_OCCUPANTS
+    ) {
+      return {
+        ...room,
+        status: ROOM_STATUS.AVAILABLE,
+        mode: ROOM_MODE.AVAILABLE,
+        fullTimerEndsAt: null,
+      }
     }
 
-    return {
-      ...room,
-      status: ROOM_STATUS.AVAILABLE,
-      mode: ROOM_MODE.AVAILABLE,
-      fullTimerEndsAt: null,
-    }
+    return { ...room, fullTimerEndsAt: null }
   })
 
   return changed ? { ...state, auditoriums } : state
 }
 
-function processSessionTimers(state, now) {
-  const sessionIds = state.sessions.map((session) => session.id)
+function exitExpiredParticipants(state, now) {
   let nextState = state
+  let changed = false
+  const expiredIds = []
 
-  sessionIds.forEach((sessionId) => {
-    const session = nextState.sessions.find((item) => item.id === sessionId)
+  state.auditoriums.forEach((room) => {
+    room.occupants.forEach((participant) => {
+      if (now >= participant.endsAt) expiredIds.push(participant.id)
+    })
+  })
 
-    if (!session) return
+  expiredIds.forEach((participantId) => {
+    const leftState = leave(nextState, participantId)
 
-    const room = findSessionRoom(nextState, sessionId)
-
-    if (!room) {
-      if (session.workStartedAt != null || session.stayPromptAt != null) {
-        nextState = updateSession(nextState, sessionId, {
-          workStartedAt: null,
-          stayPromptAt: null,
-        })
-      }
-      return
-    }
-
-    if (session.stayPromptAt != null) {
-      if (now >= session.stayPromptAt + THIRTY_MINUTES) {
-        const leftState = leave(nextState, sessionId)
-        if (leftState) nextState = leftState
-      }
-      return
-    }
-
-    if (session.workStartedAt == null) return
-
-    const promptAt = session.workStartedAt + TWO_HOURS
-
-    if (now < promptAt) return
-
-    nextState = updateSession(nextState, sessionId, { stayPromptAt: promptAt })
-
-    if (now >= promptAt + THIRTY_MINUTES) {
-      const leftState = leave(nextState, sessionId)
-      if (leftState) nextState = leftState
+    if (leftState) {
+      nextState = leftState
+      changed = true
     }
   })
+
+  return changed ? nextState : state
+}
+
+export function processDueEvents(state, now) {
+  let nextState = decideDueDummies(state, now)
+
+  nextState = confirmFullTimers(nextState, now)
+  nextState = exitExpiredParticipants(nextState, now)
 
   return nextState
 }
 
-export function tick() {
-  const realNow = Date.now()
-  const realDelta = realNow - lastRealNow
-  lastRealNow = realNow
+function getNextEventAt(state, now) {
+  let nextAt = Number.POSITIVE_INFINITY
 
-  if (realDelta <= 0) return
+  state.auditoriums.forEach((room) => {
+    if (room.fullTimerEndsAt != null) {
+      nextAt = Math.min(nextAt, room.fullTimerEndsAt)
+    }
+
+    room.occupants.forEach((participant) => {
+      nextAt = Math.min(nextAt, getParticipantEventAt(participant))
+    })
+  })
+
+  if (nextAt === Number.POSITIVE_INFINITY) return null
+
+  return Math.max(nextAt, now)
+}
+
+function clearEventTimeout() {
+  if (eventTimeoutId === null) return
+
+  clearTimeout(eventTimeoutId)
+  eventTimeoutId = null
+}
+
+function scheduleNextEvent() {
+  if (!started) return
+
+  clearEventTimeout()
 
   const state = getState()
-  const now = state.time.now + realDelta * state.time.speed
+  const now = getNow()
+  const nextAt = getNextEventAt(state, now)
 
-  let nextState = {
-    ...state,
-    time: { ...state.time, now },
-  }
+  if (nextAt === null) return
 
-  nextState = processRoomTimers(nextState, now)
-  nextState = processSessionTimers(nextState, now)
+  const delay = Math.max(0, (nextAt - now) / getSpeed())
+  eventTimeoutId = setTimeout(handleScheduledEvent, delay)
+}
 
-  setState(nextState)
+function handleScheduledEvent() {
+  eventTimeoutId = null
+
+  if (!started) return
+
+  const now = getNow()
+  const state = getState()
+  const nextState = processDueEvents(state, now)
+
+  if (nextState !== state) setState(nextState)
+
+  scheduleNextEvent()
 }
 
 export function syncTime() {
-  if (intervalId === null) return
-  tick()
+  const now = getNow()
+  const state = getState()
+  const nextState = processDueEvents(state, now)
+
+  if (nextState !== state) setState(nextState)
+
+  scheduleNextEvent()
 }
 
 export function setTimeSpeed(speed) {
-  if (!TIME_SPEEDS.includes(speed)) return false
+  if (!setClockSpeed(speed)) return false
 
-  lastRealNow = Date.now()
   setState((state) =>
     state.time.speed === speed
       ? state
       : { ...state, time: { ...state.time, speed } },
   )
+  scheduleNextEvent()
 
   return true
 }
 
 export function startTimeEngine() {
-  if (intervalId !== null) return
+  if (started) return
 
-  lastRealNow = Date.now()
-  intervalId = setInterval(tick, TICK_INTERVAL)
+  started = true
+  startClock()
+  unsubscribeStore = subscribe(scheduleNextEvent)
+  syncTime()
 }
 
 export function stopTimeEngine() {
-  if (intervalId === null) return
+  if (!started) return
 
-  clearInterval(intervalId)
-  intervalId = null
+  started = false
+  clearEventTimeout()
+
+  if (unsubscribeStore) {
+    unsubscribeStore()
+    unsubscribeStore = null
+  }
+
+  stopClock()
 }

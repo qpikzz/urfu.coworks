@@ -1,21 +1,35 @@
+import { FULL_ROOM_CONFIRMATION_MS } from '../config.js'
 import { ROOM_STATUS } from '../data/auditoriums.js'
+import {
+  createParticipant,
+  extendParticipant,
+  isExtensionAvailable,
+} from './sessionModel.js'
 import { ROOM_MODE } from './store.js'
-import { FIVE_MINUTES } from './timers.js'
-
-function getNow(state) {
-  return state.time?.now ?? Date.now()
-}
+import { getNow } from './virtualClock.js'
 
 function findRoom(state, roomId) {
   return state.auditoriums.find((room) => room.id === roomId)
 }
 
+function findParticipant(state, sessionId) {
+  for (const room of state.auditoriums) {
+    const participant = room.occupants.find((item) => item.id === sessionId)
+
+    if (participant) return { room, participant }
+  }
+
+  return null
+}
+
 function isSessionInAnyRoom(state, sessionId) {
-  return state.auditoriums.some((room) => room.occupantIds.includes(sessionId))
+  return state.auditoriums.some((room) =>
+    room.occupants.some((participant) => participant.id === sessionId),
+  )
 }
 
 function isRoomFull(room) {
-  return room.occupantIds.length >= room.capacity
+  return room.occupants.length >= room.capacity
 }
 
 function updateRoom(state, roomId, update) {
@@ -27,63 +41,41 @@ function updateRoom(state, roomId, update) {
   }
 }
 
-function updateSession(state, sessionId, update) {
-  return {
-    ...state,
-    sessions: state.sessions.map((session) =>
-      session.id === sessionId ? { ...session, ...update } : session,
-    ),
-  }
+function pickMainUserId(occupants) {
+  if (occupants.length === 0) return null
+
+  return occupants.reduce((earliest, participant) =>
+    participant.joinedAt < earliest.joinedAt ? participant : earliest,
+  ).id
 }
 
-function startWork(state, sessionId) {
-  return updateSession(state, sessionId, {
-    workStartedAt: getNow(state),
-    stayPromptAt: null,
+function createSessionParticipant(state, sessionId) {
+  const session = state.sessions.find((item) => item.id === sessionId)
+
+  return createParticipant({
+    id: sessionId,
+    name: session ? session.name : sessionId,
+    joinedAt: getNow(),
   })
-}
-
-function clearWork(state, sessionId) {
-  return updateSession(state, sessionId, {
-    workStartedAt: null,
-    stayPromptAt: null,
-  })
-}
-
-function enterRoom(state, roomId, sessionId, update) {
-  const nextState = {
-    ...state,
-    auditoriums: state.auditoriums.map((room) => {
-      if (room.id === roomId) return { ...room, ...update }
-      if (!room.requests.includes(sessionId)) return room
-
-      return {
-        ...room,
-        requests: room.requests.filter((id) => id !== sessionId),
-      }
-    }),
-  }
-
-  return startWork(nextState, sessionId)
 }
 
 export function occupy(state, sessionId, roomId, mode) {
   const room = findRoom(state, roomId)
 
   if (!room || room.status !== ROOM_STATUS.FREE) return null
-  if (room.occupantIds.length > 0) return null
+  if (room.occupants.length > 0) return null
   if (isSessionInAnyRoom(state, sessionId)) return null
   if (mode !== ROOM_MODE.AVAILABLE && mode !== ROOM_MODE.FULL) return null
 
   const isFull = mode === ROOM_MODE.FULL
 
-  return enterRoom(state, roomId, sessionId, {
+  return updateRoom(state, roomId, {
     status: isFull ? ROOM_STATUS.BUSY : ROOM_STATUS.AVAILABLE,
     mode,
-    occupantIds: [sessionId],
+    occupants: [createSessionParticipant(state, sessionId)],
     mainUserId: sessionId,
     requests: [],
-    fullTimerEndsAt: isFull ? getNow(state) + FIVE_MINUTES : null,
+    fullTimerEndsAt: isFull ? getNow() + FULL_ROOM_CONFIRMATION_MS : null,
   })
 }
 
@@ -94,8 +86,8 @@ export function joinAvailable(state, sessionId, roomId) {
   if (isRoomFull(room)) return null
   if (isSessionInAnyRoom(state, sessionId)) return null
 
-  return enterRoom(state, roomId, sessionId, {
-    occupantIds: [...room.occupantIds, sessionId],
+  return updateRoom(state, roomId, {
+    occupants: [...room.occupants, createSessionParticipant(state, sessionId)],
   })
 }
 
@@ -121,8 +113,8 @@ export function acceptRequest(state, sessionId, roomId, requestUserId) {
   if (isRoomFull(room)) return null
   if (isSessionInAnyRoom(state, requestUserId)) return null
 
-  return enterRoom(state, roomId, requestUserId, {
-    occupantIds: [...room.occupantIds, requestUserId],
+  return updateRoom(state, roomId, {
+    occupants: [...room.occupants, createSessionParticipant(state, requestUserId)],
     requests: room.requests.filter((id) => id !== requestUserId),
   })
 }
@@ -138,46 +130,42 @@ export function rejectRequest(state, sessionId, roomId, requestUserId) {
   })
 }
 
-export function confirmStay(state, sessionId) {
-  const session = state.sessions.find((item) => item.id === sessionId)
+export function extendSession(state, sessionId) {
+  const found = findParticipant(state, sessionId)
 
-  if (!session || session.stayPromptAt == null) return null
+  if (!found || !isExtensionAvailable(found.participant, getNow())) return null
 
-  const room = state.auditoriums.find((item) =>
-    item.occupantIds.includes(sessionId),
-  )
-
-  if (!room) return null
-
-  return updateSession(state, sessionId, {
-    workStartedAt: getNow(state),
-    stayPromptAt: null,
+  return updateRoom(state, found.room.id, {
+    occupants: found.room.occupants.map((participant) =>
+      participant.id === sessionId ? extendParticipant(participant) : participant,
+    ),
   })
 }
 
 export function leave(state, sessionId) {
-  const room = state.auditoriums.find((item) =>
-    item.occupantIds.includes(sessionId),
+  const found = findParticipant(state, sessionId)
+
+  if (!found) return null
+
+  const { room } = found
+  const occupants = room.occupants.filter(
+    (participant) => participant.id !== sessionId,
   )
 
-  if (!room) return null
-
-  const occupantIds = room.occupantIds.filter((id) => id !== sessionId)
-  const nextState = clearWork(state, sessionId)
-
-  if (occupantIds.length === 0) {
-    return updateRoom(nextState, room.id, {
+  if (occupants.length === 0) {
+    return updateRoom(state, room.id, {
       status: ROOM_STATUS.FREE,
       mode: null,
-      occupantIds: [],
+      occupants: [],
       mainUserId: null,
       requests: [],
       fullTimerEndsAt: null,
     })
   }
 
-  return updateRoom(nextState, room.id, {
-    occupantIds,
-    mainUserId: room.mainUserId === sessionId ? occupantIds[0] : room.mainUserId,
+  return updateRoom(state, room.id, {
+    occupants,
+    mainUserId:
+      room.mainUserId === sessionId ? pickMainUserId(occupants) : room.mainUserId,
   })
 }

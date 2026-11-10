@@ -1,5 +1,7 @@
 import { ROOM_STATUS } from '../data/auditoriums.js'
+import { isExtensionAvailable } from './sessionModel.js'
 import { BLOCKS } from './store.js'
+import { getNow } from './virtualClock.js'
 
 export const ROOM_BLOCKS = Object.freeze([
   { id: BLOCKS.FREE, status: ROOM_STATUS.FREE, title: 'Свободное' },
@@ -38,9 +40,35 @@ export function filterRooms(rooms, query) {
 
 export function selectSessionRoom(state, sessionId) {
   return (
-    state.auditoriums.find((room) => room.occupantIds.includes(sessionId)) ??
-    null
+    state.auditoriums.find((room) =>
+      room.occupants.some((participant) => participant.id === sessionId),
+    ) ?? null
   )
+}
+
+export function selectSessionParticipant(state, sessionId) {
+  for (const room of state.auditoriums) {
+    const participant = room.occupants.find((item) => item.id === sessionId)
+
+    if (participant) return { room, participant }
+  }
+
+  return null
+}
+
+export function selectExtensionAvailable(state, sessionId) {
+  const found = selectSessionParticipant(state, sessionId)
+
+  return found ? isExtensionAvailable(found.participant, getNow()) : false
+}
+
+export function selectRoomParticipants(state, sessionId, roomId) {
+  const room = state.auditoriums.find((item) => item.id === roomId)
+
+  if (!room) return []
+  if (!room.occupants.some((participant) => participant.id === sessionId)) return []
+
+  return [...room.occupants].sort((a, b) => a.joinedAt - b.joinedAt)
 }
 
 export function selectSessionRooms(state, sessionId) {

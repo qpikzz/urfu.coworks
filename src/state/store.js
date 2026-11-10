@@ -1,7 +1,7 @@
 import { createInitialAuditoriums, ROOM_STATUS } from '../data/auditoriums.js'
 import { SESSIONS } from '../data/sessions.js'
 import { UNIVERSITIES } from '../data/universities.js'
-import { DEFAULT_TIME_SPEED } from './timers.js'
+import { DEFAULT_TIME_SPEED } from '../config.js'
 
 export const BLOCKS = Object.freeze({
   FREE: 'free',
@@ -35,8 +35,6 @@ function createSessionState(session) {
     universityId: DEFAULT_UNIVERSITY_ID,
     collapsedBlocks: { ...DEFAULT_COLLAPSED_BLOCKS },
     searchQuery: '',
-    workStartedAt: null,
-    stayPromptAt: null,
   }
 }
 
@@ -44,7 +42,6 @@ export function createInitialState() {
   return {
     time: {
       speed: DEFAULT_TIME_SPEED,
-      now: Date.now(),
     },
     auditoriums: createInitialAuditoriums().map((auditorium) => ({
       ...auditorium,

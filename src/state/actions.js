@@ -2,7 +2,7 @@ import { getState, setState } from './store.js'
 import { syncTime } from './timeEngine.js'
 import {
   acceptRequest,
-  confirmStay as confirmStayTransition,
+  extendSession as extendSessionTransition,
   joinAvailable,
   leave,
   occupy,
@@ -45,8 +45,8 @@ export function leaveRoom(sessionId) {
   return run(leave, sessionId)
 }
 
-export function continueWork(sessionId) {
-  return run(confirmStayTransition, sessionId)
+export function extendSession(sessionId) {
+  return run(extendSessionTransition, sessionId)
 }
 
 export function setSessionUniversity(sessionId, universityId) {

@@ -131,7 +131,7 @@ function RoomBlock({
                 >
                   <ul className="room-block__rooms">
                     {block.rooms.map((room) => {
-                      const isFull = room.occupantIds.length >= room.capacity
+                      const isFull = room.occupants.length >= room.capacity
                       const hasRequested = room.requests.includes(sessionId)
                       const isFiltered = room.matchesSearch === false
 
@@ -152,7 +152,7 @@ function RoomBlock({
                               <span className="room-row__name">{room.name}</span>
                               <RoomCount
                                 className="room-row__count"
-                                value={room.occupantIds.length}
+                                value={room.occupants.length}
                                 capacity={room.capacity}
                               />
                               <button
@@ -204,7 +204,7 @@ export default function RoomList({ sessionId }) {
 
   const blocks = selectRoomBlocks(state, sessionId, { includeFiltered: true })
   const isWorking = state.auditoriums.some((room) =>
-    room.occupantIds.includes(sessionId),
+    room.occupants.some((participant) => participant.id === sessionId),
   )
 
   function performRoomAction(room) {

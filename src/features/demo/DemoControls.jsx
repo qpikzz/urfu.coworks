@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { TIME_SPEEDS } from '../../state/timers.js'
+import { TIME_SPEEDS } from '../../config.js'
 
 function DemoSwitch({ labelId, options, value, onChange }) {
   const listRef = useRef(null)

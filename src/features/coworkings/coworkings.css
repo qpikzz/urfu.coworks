@@ -218,7 +218,19 @@
   transform-origin: left center;
   border-radius: inherit;
   background-color: var(--accent);
-  transition: transform var(--dur-app) linear;
+  animation-name: room-screen-timer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes room-screen-timer {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .room-screen__requests {
