@@ -15,6 +15,8 @@
   --status-free: #4bd37b;
   --status-available: #5fa8ff;
   --status-busy: #f26464;
+  --status-dot-size: 0.75rem;
+  --status-dot-glow: 0.5rem;
 
   --phone-frame: #0f1117;
   --overlay: rgba(15, 17, 23, 0.6);
@@ -32,6 +34,8 @@
   --font-size-20: 1.25rem;
   --font-size-24: 1.5rem;
   --font-size-32: 2rem;
+  --font-size-timer: 2.25rem;
+  --timer-letter-spacing: 0.02em;
   --font-size-page-title: clamp(1.75rem, 4vw, 2.5rem);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -59,10 +63,13 @@
 
   --border-width: 1px;
   --border-width-strong: 2px;
+  --border-width-avatar: 1.5px;
   --header-blur: 14px;
   --status-bar-height: 1.875rem;
 
   --tap-target: 2.75rem;
+  --avatar-size: 2.375rem;
+  --timer-track-height: 0.25rem;
   --room-row-height: 3.75rem;
   --room-list-height: calc(var(--room-row-height) * 5.5 + var(--space-2) * 5);
 

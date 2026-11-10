@@ -13,3 +13,4 @@ export const DUMMY_EXTEND_CHANCE = 0.45
 export const TIME_SPEEDS = Object.freeze([1, 5, 200])
 export const DEFAULT_TIME_SPEED = 1
 export const CLOCK_TICK_MS = 250
+export const ROOM_TIMER_UPDATE_MS = 100
