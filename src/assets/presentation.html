@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>УрФУ.Коворкинги x Nikita Shvedov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;subset=cyrillic&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#22252c;--surface-1:#2d313c;--surface-2:#404652;--accent:#3c6bd3;--accent-soft:#96b4fc;
+  --text:#fff;--text-muted:#a6b0c2;--border:rgba(255,255,255,.12);
+  --status-free:#4bd37b;--status-available:#5fa8ff;--status-busy:#f26464;
+  --phone-frame:#0f1117;--glow-accent:rgba(60,107,211,.12);
+  --font-base:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --radius-card:16px;--radius-group:20px;--radius-pill:999px;--radius-phone:40px;
+  --dur-fast:140ms;--dur-base:240ms;--dur-slow:360ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1);--ease-in-out:cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-base);-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,ul{margin:0;padding:0;list-style:none;font:inherit}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--accent-soft);outline-offset:2px}
+a{color:inherit;text-decoration:none}
+
+#viewport{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg)}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;overflow:hidden;background:var(--bg);--dir:1}
+
+/* ambient + moving shape */
+.glow{position:absolute;inset:0;background:radial-gradient(900px 700px at 85% 90%,var(--glow-accent),transparent 70%);pointer-events:none}
+.shape{position:absolute;left:0;top:0;border-radius:28px;border:1px solid var(--border);
+  background:linear-gradient(135deg,var(--surface-1),var(--surface-2));
+  box-shadow:0 1.5rem 3rem rgba(0,0,0,.35),0 0 3rem var(--glow-accent);
+  transform:translate(var(--sx),var(--sy)) rotate(var(--sr)) scale(var(--ss));width:var(--sw);height:var(--sh);opacity:var(--so);
+  transition:transform 1.1s var(--ease-out),width 1.1s var(--ease-out),height 1.1s var(--ease-out),opacity .7s var(--ease-in-out),box-shadow .5s var(--ease-out)}
+
+/* shape as link (slide 07) */
+.shape{overflow:hidden;pointer-events:none;color:#fff}
+.shape::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#3c6bd3,#6b93ea);opacity:0;transition:opacity .8s var(--ease-in-out),filter var(--dur-base)}
+.shape-in{position:absolute;left:96px;top:104px;display:flex;flex-direction:column;gap:18px;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease-out),transform .7s var(--ease-out)}
+.shape-in b{display:flex;align-items:center;gap:28px;font-size:68px;font-weight:600;line-height:1.1;white-space:nowrap}
+.shape-in svg{width:76px;height:76px;transition:transform var(--dur-slow) var(--ease-out)}
+.shape-in small{font-size:30px;font-weight:400;opacity:.85}
+#stage[data-link="1"] .shape{pointer-events:auto;cursor:pointer;z-index:3;box-shadow:0 1.5rem 3rem rgba(0,0,0,.35),0 0 5rem rgba(60,107,211,.45)}
+#stage[data-link="1"] .shape::before{opacity:1}
+#stage[data-link="1"] .shape-in{opacity:1;transform:none;transition-delay:.55s}
+#stage[data-link="1"] .shape:hover::before,#stage[data-link="1"] .shape:focus-visible::before{filter:brightness(1.14)}
+#stage[data-link="1"] .shape:hover svg,#stage[data-link="1"] .shape:focus-visible svg{transform:translate(14px,-14px)}
+
+/* header */
+.hdr{position:absolute;left:64px;right:64px;top:34px;display:flex;justify-content:space-between;font-size:26px;font-weight:400;z-index:5}
+.hdr span:last-child{display:inline-block;color:var(--accent-soft);font-weight:500;font-variant-numeric:tabular-nums;transition:transform .45s var(--ease-out),opacity .45s}
+.hdr span.swap{transform:translateY(-14px);opacity:0;transition-duration:.12s}
+
+/* slides + entrance system */
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .35s var(--ease-in-out),visibility 0s .35s}
+.slide.on{opacity:1;visibility:visible;transition-delay:0s}
+[data-a]{opacity:0;transform:translate3d(calc(48px*var(--dir)),0,0);filter:blur(6px);
+  transition:opacity .7s var(--ease-out),transform .8s var(--ease-out),filter .7s var(--ease-out);
+  transition-delay:calc(var(--i,0)*100ms + 160ms)}
+.on [data-a]{opacity:1;transform:none;filter:none}
+.slide:not(.on) [data-a]{transition-duration:.25s;transition-delay:0s}
+[data-a=up]{transform:translate3d(0,40px,0)}
+.on [data-a=up]{transform:none}
+
+.abs{position:absolute}
+.title{font-size:76px;font-weight:500;line-height:1.25;text-align:center;left:0;right:0}
+.lead{font-size:38px;line-height:1.45;font-weight:400}
+.muted{color:var(--text-muted)}
+
+/* 00 */
+.hero{left:64px;top:0;bottom:0;width:1200px;display:flex;flex-direction:column;justify-content:center;gap:48px}
+.h1{font-size:68px;font-weight:500;line-height:1.25;letter-spacing:-.01em;white-space:nowrap}
+.hero .lead{width:760px;font-size:36px}
+
+/* 01 */
+.stack{inset:0;display:grid;grid-template-rows:152px 120px 1fr 416px;justify-items:center}
+.stack .title{grid-row:2;align-self:center;width:100%}
+.stack .lead{grid-row:3;align-self:center;width:1200px;text-align:center}
+.stack .ph{grid-row:4;width:840px;border-radius:var(--radius-group) var(--radius-group) 0 0}
+.ph{border:2px dashed var(--border);background:repeating-linear-gradient(135deg,var(--surface-1) 0 22px,#303541 22px 44px);
+  border-radius:var(--radius-group);display:grid;place-items:center;color:var(--text-muted);font-size:30px}
+
+/* 02 statuses */
+.st{left:1130px;width:700px;display:flex;align-items:center;gap:36px;font-size:124px;font-weight:300;line-height:1}
+.dot{width:64px;height:64px;border-radius:50%;flex:none;background:var(--c);box-shadow:0 0 36px var(--c);animation:pulse 2.8s var(--ease-in-out) infinite;animation-delay:calc(var(--i)*.5s)}
+@keyframes pulse{50%{box-shadow:0 0 64px var(--c);transform:scale(1.08)}}
+.h2{font-size:64px;font-weight:500;line-height:1.25}
+.side{left:64px;width:640px;top:400px}
+.side .h2{margin-bottom:32px}
+.side .lead{font-size:34px}
+
+/* 03 / 09 two columns */
+.cols{left:64px;right:64px;top:250px;display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.col{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius-group);padding:56px 56px 48px;min-height:640px}
+.col h3{font-size:46px;font-weight:600;color:var(--accent-soft);margin-bottom:36px}
+.col li{font-size:36px;line-height:1.4;padding:20px 0 20px 44px;position:relative;border-top:1px solid var(--border)}
+.col li::before{content:"";position:absolute;left:0;top:37px;width:16px;height:16px;border-radius:50%;background:var(--accent)}
+
+/* persistent option layer (04-08) */
+#opt{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
+#stage[data-opt="1"] #opt{opacity:1}
+#opt .title{top:150px;position:absolute}
+#rail{position:absolute;left:64px;right:64px;top:352px;height:2px;background:var(--border);opacity:0;transition:opacity .5s}
+#rail i{position:absolute;inset:0;background:var(--accent-soft);transform-origin:left;transform:scaleX(0);transition:transform 1s var(--ease-out)}
+#stage[data-step="1"] #rail,#stage[data-step="2"] #rail,#stage[data-step="3"] #rail,#stage[data-step="4"] #rail{opacity:1}
+.c{position:absolute;top:288px;width:128px;height:128px;margin-left:-64px;border-radius:50%;background:var(--bg);border:2px solid var(--text-muted);
+  display:grid;place-items:center;font-size:60px;font-weight:300;color:var(--text-muted);opacity:0;
+  transition:left .9s var(--ease-out),opacity .5s,background .5s,border-color .5s,color .5s,transform .5s var(--ease-out)}
+.c.vis{opacity:1}
+.c.act{background:var(--accent);border-color:var(--accent);color:var(--text);transform:scale(1.08);box-shadow:0 0 0 12px rgba(60,107,211,.18)}
+.oh{left:243px;width:700px;top:455px;text-align:center;font-size:58px;font-weight:500;line-height:1.2}
+.ob{left:64px;top:640px;font-size:42px;line-height:1.5}
+.ob p{margin-bottom:8px}
+.ob li{padding-left:56px;position:relative;line-height:1.55}
+.ob li::before{content:"";position:absolute;left:12px;top:24px;width:14px;height:14px;border-radius:50%;background:var(--accent-soft)}
+.ob.w{width:880px;font-size:38px;top:640px}
+.ob.w p{margin-bottom:20px}
+.neg{color:var(--status-busy);font-weight:500}
+
+/* 04 list */
+.list{left:64px;top:360px;font-size:70px;line-height:1.3}
+.list li{padding:14px 0;display:flex;gap:28px}
+.list b{font-weight:300;color:var(--accent-soft);min-width:70px}
+
+.nt{transition:none!important}
+
+/* 10 */
+.big{left:0;right:0;top:360px;text-align:center;font-size:150px;font-weight:600;letter-spacing:-.02em}
+.sub{left:360px;right:360px;top:620px;text-align:center;font-size:44px;line-height:1.45;color:var(--text-muted)}
+.sub b{color:var(--accent-soft);font-weight:500}
+.sub+.sub{top:820px}
+
+/* 11 */
+.steps{left:64px;top:240px;width:1000px}
+.steps li{display:flex;gap:36px;align-items:center;font-size:48px;line-height:1.3;padding:26px 0;position:relative}
+.steps li::after{content:"";position:absolute;left:35px;top:calc(50% + 36px);height:calc(100% - 4px);width:2px;background:var(--border)}
+.steps li:last-child::after{display:none}
+.n{width:72px;height:72px;border-radius:50%;flex:none;display:grid;place-items:center;border:2px solid var(--accent-soft);color:var(--accent-soft);font-size:34px;font-weight:500;background:var(--bg);position:relative;z-index:1}
+.steps li:last-child .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.help{left:1120px;width:700px;top:270px}
+.help h2{font-size:72px;font-weight:500;margin-bottom:28px}
+.help p{font-size:34px;line-height:1.5}
+.qr{left:1260px;top:640px;width:340px;height:340px;border-radius:var(--radius-group);background:#fff;display:grid;place-items:center;color:#10233a;font-size:28px;text-align:center;
+  padding:20px;transition:transform var(--dur-base) var(--ease-out),box-shadow var(--dur-base)}
+.qr:hover{transform:scale(1.04);box-shadow:0 0 0 10px rgba(150,180,252,.25)}
+.hint{left:1120px;width:700px;top:1000px;font-size:26px;color:var(--text-muted);text-align:center}
+
+/* nav */
+#nav{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-pill);
+  background:rgba(34,37,44,.72);backdrop-filter:blur(14px);border:1px solid var(--border);z-index:10;opacity:.0;transition:opacity .3s}
+#viewport:hover #nav,#nav:focus-within{opacity:1}
+#nav{display:none!important}
+#nav button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--text);transition:background var(--dur-fast)}
+#nav button:hover{background:var(--surface-2)}
+#dots{display:flex;gap:6px}
+#dots i{width:8px;height:8px;border-radius:50%;background:var(--surface-2);cursor:pointer;transition:all var(--dur-base) var(--ease-out)}
+#dots i.on{width:26px;border-radius:var(--radius-pill);background:var(--accent-soft)}
+#bar{position:fixed;left:0;top:0;height:3px;background:var(--accent);width:0;z-index:11;transition:width .6s var(--ease-out)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;transition-delay:0s!important}
+}
+</style>
+</head>
+<body>
+<div id="viewport" tabindex="0" aria-label="Презентация">
+<div id="bar"></div>
+<div id="stage" data-opt="0" data-step="0">
+  <div class="glow"></div>
+  <a class="shape" id="shape" href="#" target="_top" tabindex="-1" aria-label="Макет раздела"><span class="shape-in"><b>Макет раздела<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></b><small>Отдельная страница сайта</small></span></a>
+
+  <header class="hdr"><span>УрФУ.Коворкинги x Nikita Shvedov</span><span id="num">00</span></header>
+
+  <!-- persistent layer for slides 04-08 -->
+  <div id="opt" aria-hidden="true">
+    <h2 class="title">Варианты интеграции</h2>
+    <div id="rail"><i></i></div>
+    <div class="c" data-n="1">1</div><div class="c" data-n="2">2</div><div class="c" data-n="3">3</div><div class="c" data-n="4">4</div>
+  </div>
+
+  <!-- 00 -->
+  <section class="slide">
+    <div class="abs hero">
+      <h1 class="h1" data-a>Узнай заполненность коворкинга<br>не заглядывая внутрь</h1>
+      <p class="lead" data-a style="--i:2">Система показывает статус коворкинга в реальном времени и позволяет студентам занимать места.</p>
+    </div>
+  </section>
+
+  <!-- 01 -->
+  <section class="slide">
+    <div class="abs stack">
+      <h2 class="title" data-a="up">Проблема</h2>
+      <p class="lead" data-a="up" style="--i:1">Сейчас найти коворкинг означает обойти этажи. Нет информации о занятости ни у студентов, ни у администрации.<br>Команде трудно найти место, соло-студенту тихий уголок.</p>
+      <div class="ph" data-a="up" style="--i:3">[Иллюстрация]</div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="slide">
+    <div class="abs side"><h2 class="h2" data-a>Решение. Статусы</h2><p class="lead" data-a style="--i:1">Каждой аудитории присваивается статус, который читается с одного взгляда.</p></div>
+    <div class="abs st" data-a style="--i:2;top:270px"><span class="dot" style="--c:var(--status-free);--i:0"></span>Свободно</div>
+    <div class="abs st" data-a style="--i:3;top:455px"><span class="dot" style="--c:var(--status-available);--i:1"></span>Доступно</div>
+    <div class="abs st" data-a style="--i:4;top:640px"><span class="dot" style="--c:var(--status-busy);--i:2"></span>Занято</div>
+  </section>
+
+  <!-- 03 -->
+  <section class="slide">
+    <h2 class="abs title" data-a="up" style="top:110px">Решение. Как работает</h2>
+    <div class="abs cols">
+      <div class="col" data-a style="--i:1"><h3>Для администрации</h3><ul>
+        <li>Логи</li><li>Поиск человека в реальном времени</li><li>Актуальная информация о доступности коворкингов и спроса на них</li></ul></div>
+      <div class="col" data-a style="--i:2"><h3>Для студента</h3><ul>
+        <li>Список аудиторий по институту</li><li>«Записаться»</li><li>Режимы «Оставить доступным» и «Занять полностью»</li><li>Таймер подтверждения</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="slide">
+    <ul class="abs list">
+      <li data-a style="--i:1"><b>1.</b>Ничего не меняется</li>
+      <li data-a style="--i:2"><b>2.</b>S2S (Student to student)</li>
+      <li data-a style="--i:3"><b>3.</b>УрФУ.Учёба</li>
+      <li data-a style="--i:4"><b>4.</b>Всевузовская интеграция</li>
+    </ul>
+  </section>
+
+  <!-- 05 -->
+  <section class="slide">
+    <h3 class="abs oh" data-a="up">Ничего не меняется</h3>
+    <div class="abs ob"><p data-a="up" style="--i:1">Точка отсчёта:</p><ul>
+      <li data-a="up" style="--i:2">Ручной поиск</li><li data-a="up" style="--i:3">Потери времени</li><li data-a="up" style="--i:4">Нет данных об использовании</li><li data-a="up" style="--i:5">Нет планирования</li></ul></div>
+  </section>
+
+  <!-- 06 -->
+  <section class="slide">
+    <h3 class="abs oh" data-a="up">S2S (От студентов для студентов)</h3>
+    <div class="abs ob w" style="top:690px"><p data-a="up" style="--i:1">Простой Telegram-бот с планированием без согласования.</p>
+      <p data-a="up" style="--i:2">Быстрая проверка идеи на студентах.</p>
+      <p data-a="up" style="--i:3"><span class="neg">Минусы:</span> статус зависит от того, что отмечают сами студенты; проблема с доступностью, обработкой и хранением данных (требуется 2 VPS сервера)</p></div>
+  </section>
+
+  <!-- 07 -->
+  <section class="slide">
+    <h3 class="abs oh" data-a="up">УрФУ.Учеба</h3>
+    <div class="abs ob"><p data-a="up" style="--i:1">Основной целевой вариант:</p><ul>
+      <li data-a="up" style="--i:2">Раздел в привычном приложении</li><li data-a="up" style="--i:3">Готовая авторизация</li><li data-a="up" style="--i:4">Админская часть</li></ul></div>
+  </section>
+
+  <!-- 08 -->
+  <section class="slide">
+    <h3 class="abs oh" data-a="up">Next step</h3>
+    <div class="abs ob"><p data-a="up" style="--i:1">То, что можно реализовать в будущем:</p><ul>
+      <li data-a="up" style="--i:2">Вход по пропускам</li><li data-a="up" style="--i:3">Автоматическая установка статусов</li><li data-a="up" style="--i:4">Единая система для нескольких вузов</li><li data-a="up" style="--i:5">Аналитика загрузки</li></ul></div>
+  </section>
+
+  <!-- 09 -->
+  <section class="slide">
+    <h2 class="abs title" data-a="up" style="top:110px">Преимущества</h2>
+    <div class="abs cols">
+      <div class="col" data-a style="--i:1"><h3>Для студентов</h3><ul>
+        <li>Экономия времени и энергии</li><li>Возможность планирования</li><li>Понятные статусы</li></ul></div>
+      <div class="col" data-a style="--i:2"><h3>Для администрации</h3><ul>
+        <li>Данные об использовании</li><li>Поиск по конкретным студентам</li><li>Понимание загрузки, уменьшение количества конфликтов</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <h2 class="abs big" data-a="up">MVP уже готов!</h2>
+    <p class="abs sub" data-a="up" style="--i:2">Пришло время перейти на страницу «Демонстрация», чтобы наглядно увидеть функционал</p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <ul class="abs steps">
+      <li data-a style="--i:0"><span class="n">1</span>Сбор данных и анализ потребности</li>
+      <li data-a style="--i:1"><span class="n">2</span>Изучение MVP и доработка дизайна</li>
+      <li data-a style="--i:2"><span class="n">3</span>Запуск прототипа и тесты</li>
+      <li data-a style="--i:3"><span class="n">4</span>Полноценный продукт</li>
+    </ul>
+    <div class="abs help" data-a style="--i:3"><h2>Я готов помочь</h2><p>Я всегда готов помочь с данным проектом, ответить на ваши вопросы и не только.</p></div>
+    <!-- TODO: замените href на ссылку ресурса и вставьте картинку QR вместо подписи -->
+    <a class="abs qr" id="qr" href="#" target="_blank" rel="noopener" data-a style="--i:4">QR-код<br>(вставьте изображение)</a>
+    <p class="abs hint" data-a style="--i:5">(Нажмите на QR, чтобы перейти на указанный ресурс)</p>
+  </section>
+
+  <noscript>Для презентации нужен JavaScript.</noscript>
+</div>
+
+<nav id="nav" aria-label="Навигация по слайдам">
+  <button id="prev" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div id="dots"></div>
+  <button id="next" aria-label="Вперёд"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+</nav>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s),stage=$('#stage'),slides=[...document.querySelectorAll('.slide')],N=slides.length;
+const shape=$('#shape'),num=$('#num'),cs=[...document.querySelectorAll('.c')],dots=$('#dots');
+// shape per slide: x,y,w,h,rotation,scale,opacity (null = fades out in place)
+const S=[
+ [1268,277,833,833,19,1,1],null,null,null,
+ [1360,230,900,900,35,1,1],
+ [1150,600,1000,700,-8,1,.9],[1150,600,1000,700,-8,1,.9],[1150,600,1000,700,-8,1,1],[1150,600,1000,700,-8,1,.9],
+ null,null,null];
+const X0=593,XN=1230,GAP=177,OFF=2200;
+function stepper(step,prev){
+  cs.forEach((c,k)=>{
+    const i=k+1;let x,vis=true;
+    if(step===0){x=OFF+k*GAP;vis=false}          // parked off-screen right
+    else if(i<step){x=X0-260;vis=false}
+    else if(i===step)x=X0;
+    else x=XN+(i-step-1)*GAP;
+    c.style.transitionDelay=(prev===0&&step>0)?(k*80)+'ms':'0ms'; // enter right-to-left in a wave
+    c.style.left=x+'px';c.classList.toggle('vis',vis);c.classList.toggle('act',i===step);
+  });
+  $('#rail i').style.transform=step?`scaleX(${step/4})`:'scaleX(0)';
+}
+let idx=-1,shown=false;
+function put(p,ss,so){shape.style.cssText=`--sx:${p[0]}px;--sy:${p[1]}px;--sw:${p[2]}px;--sh:${p[3]}px;--sr:${p[4]}deg;--ss:${ss};--so:${so}`}
+function setShape(p){
+  if(!p){shape.style.setProperty('--so',0);shape.style.setProperty('--ss',.94);shown=false;return}
+  if(!shown){shape.classList.add('nt');put(p,.94,0);void shape.offsetWidth;shape.classList.remove('nt')}
+  put(p,p[5],p[6]);shown=true;
+}
+function go(n,force){
+  n=Math.max(0,Math.min(N-1,n));if(n===idx&&!force)return;
+  const dir=n>=idx?1:-1,prevStep=+stage.dataset.step;stage.style.setProperty('--dir',dir);
+  slides.forEach((s,k)=>s.classList.toggle('on',k===n));
+  setShape(S[n]);
+  const lk=n===7;stage.dataset.link=lk?1:0;shape.tabIndex=lk?0:-1;
+  const inOpt=n>=4&&n<=8;stage.dataset.opt=inOpt?1:0;
+  if(inOpt){const step=n>=5?n-4:0;stage.dataset.step=step;stepper(step,prevStep)}
+  else if(idx===-1)stepper(0,0);
+  num.classList.add('swap');setTimeout(()=>{num.textContent=String(n).padStart(2,'0');num.classList.remove('swap')},130);
+  [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===n));
+  $('#bar').style.width=((n+1)/N*100)+'%';
+  idx=n;
+  try{history.replaceState(null,'','#'+(n+1))}catch(_){}
+  try{parent.postMessage({type:'cowork-slides:state',index:idx,total:N},'*')}catch(_){}
+}
+// link to the separate "Макет раздела" page: set URL here, or the parent page can listen for the postMessage
+const DEMO_URL='';
+const dl=$('#shape');if(DEMO_URL)dl.href=DEMO_URL;
+dl.addEventListener('click',e=>{
+  if(!DEMO_URL)e.preventDefault();
+  try{if(parent!==window)parent.postMessage({type:'open-demo'},'*')}catch(_){}
+});
+slides.forEach((_,k)=>{const d=document.createElement('i');d.onclick=()=>go(k);dots.appendChild(d)});
+$('#prev').onclick=()=>go(idx-1);$('#next').onclick=()=>go(idx+1);
+addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();go(idx+1)}
+  else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();go(idx-1)}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(N-1);
+});
+let tx=null;
+addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)go(idx+(d<0?1:-1));tx=null});
+$('#viewport').addEventListener('click',()=>$('#viewport').focus());
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${k})`}
+addEventListener('resize',fit);fit();
+if('ResizeObserver' in window){new ResizeObserver(fit).observe(document.documentElement)}
+$('#qr').addEventListener('click',e=>{if($('#qr').getAttribute('href')==='#')e.preventDefault()});
+addEventListener('message',e=>{const d=e.data;if(!d||d.type!=='cowork-slides:go')return;const n=Number(d.index);if(Number.isFinite(n))go(n,true)});
+const start=parseInt(location.hash.slice(1),10);
+requestAnimationFrame(()=>go(isNaN(start)?0:start-1,true));
+})();
+</script>
+</body>
+</html>

@@ -1,8 +1,6 @@
-import { useRef, useState } from 'react'
-import { PRESENTATION_SLIDES } from '../../data/slides.js'
+import { useEffect, useRef, useState } from 'react'
+import presentationHtml from '../../assets/presentation.html?raw'
 import '../../styles/presentation.css'
-
-const SWIPE_THRESHOLD = 48
 
 function ArrowIcon({ direction }) {
   return (
@@ -26,14 +24,45 @@ function ArrowIcon({ direction }) {
 
 export default function PresentationTab({ hidden }) {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [dragOffset, setDragOffset] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const dragRef = useRef(null)
-  const isFirst = currentSlide === 0
-  const isLast = currentSlide === PRESENTATION_SLIDES.length - 1
+  const [totalSlides, setTotalSlides] = useState(0)
+  const frameRef = useRef(null)
+  const isFirst = totalSlides === 0 || currentSlide <= 0
+  const isLast = totalSlides === 0 || currentSlide >= totalSlides - 1
+
+  useEffect(() => {
+    function handleMessage(event) {
+      if (!frameRef.current || event.source !== frameRef.current.contentWindow) {
+        return
+      }
+
+      const data = event.data
+
+      if (!data || data.type !== 'cowork-slides:state') return
+
+      if (Number.isInteger(data.index)) setCurrentSlide(data.index)
+      if (Number.isInteger(data.total)) setTotalSlides(data.total)
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
+  useEffect(() => {
+    if (hidden) return undefined
+
+    const frameId = requestAnimationFrame(() => {
+      frameRef.current?.contentWindow?.dispatchEvent(new Event('resize'))
+    })
+
+    return () => cancelAnimationFrame(frameId)
+  }, [hidden])
 
   function goToSlide(index) {
-    setCurrentSlide(Math.max(0, Math.min(PRESENTATION_SLIDES.length - 1, index)))
+    frameRef.current?.contentWindow?.postMessage(
+      { type: 'cowork-slides:go', index },
+      '*',
+    )
   }
 
   function goPrev() {
@@ -52,79 +81,6 @@ export default function PresentationTab({ hidden }) {
       event.preventDefault()
       goNext()
     }
-  }
-
-  function handlePointerDown(event) {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-
-    dragRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      pointerId: event.pointerId,
-      axis: null,
-    }
-  }
-
-  function handlePointerMove(event) {
-    const drag = dragRef.current
-
-    if (!drag || event.pointerId !== drag.pointerId) return
-
-    const deltaX = event.clientX - drag.startX
-    const deltaY = event.clientY - drag.startY
-
-    if (!drag.axis) {
-      if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return
-
-      drag.axis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y'
-
-      if (drag.axis === 'y') {
-        dragRef.current = null
-        return
-      }
-
-      setIsDragging(true)
-      event.currentTarget.setPointerCapture?.(event.pointerId)
-    }
-
-    if (drag.axis !== 'x') return
-
-    const isPullingStart = isFirst && deltaX > 0
-    const isPullingEnd = isLast && deltaX < 0
-    setDragOffset(isPullingStart || isPullingEnd ? deltaX * 0.35 : deltaX)
-  }
-
-  function handlePointerEnd(event) {
-    const drag = dragRef.current
-
-    if (!drag || event.pointerId !== drag.pointerId) return
-
-    dragRef.current = null
-    setIsDragging(false)
-    setDragOffset(0)
-
-    const deltaX = event.clientX - drag.startX
-    const deltaY = event.clientY - drag.startY
-
-    if (
-      drag.axis !== 'x' ||
-      Math.abs(deltaX) < SWIPE_THRESHOLD ||
-      Math.abs(deltaX) <= Math.abs(deltaY)
-    ) {
-      return
-    }
-
-    if (deltaX < 0) {
-      goNext()
-    } else {
-      goPrev()
-    }
-  }
-
-  function handlePointerCancel() {
-    dragRef.current = null
-    setIsDragging(false)
-    setDragOffset(0)
   }
 
   return (
@@ -153,33 +109,13 @@ export default function PresentationTab({ hidden }) {
             <ArrowIcon direction="prev" />
           </button>
 
-          <div
-            className={`slider__viewport${isDragging ? ' slider__viewport--dragging' : ''}`}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerEnd}
-            onPointerCancel={handlePointerCancel}
-          >
-            <div
-              className={`slider__track${isDragging ? ' slider__track--dragging' : ''}`}
-              style={{
-                transform: `translate3d(calc(${-currentSlide * 100}% + ${dragOffset}px), 0, 0)`,
-              }}
-            >
-              {PRESENTATION_SLIDES.map((slide, index) => (
-                <article
-                  className={`slider__slide${index === currentSlide ? ' slider__slide--active' : ''}`}
-                  key={slide.id}
-                  aria-hidden={index !== currentSlide}
-                >
-                  <p className="slider__counter">
-                    Слайд {index + 1} из {PRESENTATION_SLIDES.length}
-                  </p>
-                  <h2 className="slider__title">{slide.title}</h2>
-                  <p className="slider__text">{slide.text}</p>
-                </article>
-              ))}
-            </div>
+          <div className="slider__viewport">
+            <iframe
+              ref={frameRef}
+              className="slider__embed"
+              title="Презентация проекта"
+              srcDoc={presentationHtml}
+            />
           </div>
 
           <button
