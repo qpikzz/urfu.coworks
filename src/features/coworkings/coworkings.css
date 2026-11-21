@@ -1,4 +1,4 @@
-﻿.app-header {
+.app-header {
   position: relative;
   display: grid;
   height: 56px;
@@ -86,6 +86,11 @@
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-semibold);
   white-space: nowrap;
+}
+
+.work-banner__open:focus-visible,
+.work-banner__leave:focus-visible {
+  box-shadow: 0 0 0 4px var(--on-info);
 }
 
 .room-screen {
@@ -436,6 +441,12 @@
   display: none;
 }
 
+.room-list:focus-visible,
+.room-block__scroll:focus-visible,
+.room-screen__body:focus-visible {
+  outline-offset: -2px;
+}
+
 .room-list__title {
   margin: var(--space-2) 0;
   color: var(--accent-soft);
@@ -532,6 +543,10 @@
   font-size: var(--font-size-18);
   font-weight: var(--font-weight-regular);
   text-align: left;
+}
+
+.room-block__toggle:focus-visible {
+  outline-offset: -2px;
 }
 
 .room-block__chevron {

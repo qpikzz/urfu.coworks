@@ -9,7 +9,7 @@
   --info-bg: #d1e7ff;
   --on-info: #10233a;
   --text: #ffffff;
-  --text-muted: #a6b0c2;
+  --text-muted: #aeb8c8;
   --border: rgba(255, 255, 255, 0.12);
 
   --status-free: #4bd37b;
@@ -201,6 +201,16 @@ table {
 
 [hidden] {
   display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 :focus-visible {

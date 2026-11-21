@@ -32,11 +32,10 @@ export default function WorkBanner({ sessionId, onOpen }) {
   if (!visibleRoom) return null
 
   return (
-    <div
-      className={`work-banner${closing ? ' work-banner--closing' : ''}`}
-      role="status"
-      aria-live="polite"
-    >
+    <div className={`work-banner${closing ? ' work-banner--closing' : ''}`}>
+      <span className="visually-hidden" role="status" aria-live="polite">
+        Вы работаете в {visibleRoom.name}
+      </span>
       <button
         className="work-banner__open"
         type="button"
@@ -66,7 +65,7 @@ export default function WorkBanner({ sessionId, onOpen }) {
           />
           <circle cx="12" cy="7.75" r="1.1" fill="currentColor" />
         </svg>
-        <span className="work-banner__text">
+        <span className="work-banner__text" aria-hidden="true">
           Вы работаете в {visibleRoom.name}
         </span>
       </button>

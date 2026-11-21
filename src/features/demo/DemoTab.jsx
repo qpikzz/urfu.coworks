@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PhoneFrame from './PhoneFrame.jsx'
 import DemoControls from './DemoControls.jsx'
+import AccessibilityAnnouncer from './AccessibilityAnnouncer.jsx'
 import AppHeader from '../coworkings/AppHeader.jsx'
 import RoomList from '../coworkings/RoomList.jsx'
 import RoomScreen from '../coworkings/RoomScreen.jsx'
@@ -121,6 +122,11 @@ export default function DemoTab({ hidden }) {
           {panelOpen ? 'Скрыть панель' : 'Сессии и скорость'}
         </button>
       </div>
+      <AccessibilityAnnouncer
+        state={state}
+        sessionId={session.id}
+        active={!hidden}
+      />
     </section>
   )
 }

@@ -191,6 +191,9 @@ export default function RoomList({ sessionId }) {
   const [roomToOccupy, setRoomToOccupy] = useState(null)
   const [dialogClosing, setDialogClosing] = useState(false)
   const dialogTimerRef = useRef(null)
+  const dialogRef = useRef(null)
+  const dialogTriggerRef = useRef(null)
+  const roomListRef = useRef(null)
   const session = state.sessions.find((item) => item.id === sessionId)
 
   useEffect(
@@ -199,6 +202,43 @@ export default function RoomList({ sessionId }) {
     },
     [],
   )
+
+  useEffect(() => {
+    if (!roomToOccupy) return undefined
+
+    const dialog = dialogRef.current
+
+    if (!dialog) return undefined
+
+    const firstButton = dialog.querySelector('button:not(:disabled)')
+    firstButton?.focus()
+
+    function handleFocusIn(event) {
+      if (!dialog.contains(event.target)) {
+        firstButton?.focus()
+      }
+    }
+
+    document.addEventListener('focusin', handleFocusIn)
+
+    return () => document.removeEventListener('focusin', handleFocusIn)
+  }, [roomToOccupy])
+
+  useEffect(() => {
+    if (roomToOccupy) return
+
+    const trigger = dialogTriggerRef.current
+
+    if (!trigger) return
+
+    dialogTriggerRef.current = null
+
+    if (trigger.isConnected) {
+      trigger.focus()
+    } else {
+      roomListRef.current?.focus()
+    }
+  }, [roomToOccupy])
 
   if (!session) return null
 
@@ -209,11 +249,54 @@ export default function RoomList({ sessionId }) {
 
   function performRoomAction(room) {
     if (room.status === ROOM_STATUS.FREE) {
+      dialogTriggerRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
       setRoomToOccupy(room)
     } else if (room.status === ROOM_STATUS.AVAILABLE) {
       joinAvailableRoom(sessionId, room.id)
     } else {
       requestJoinRoom(sessionId, room.id)
+    }
+  }
+
+  function handleDialogKeyDown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeOccupyDialog()
+      return
+    }
+
+    if (event.key !== 'Tab') return
+
+    const dialog = dialogRef.current
+
+    if (!dialog) return
+
+    const focusable = Array.from(
+      dialog.querySelectorAll(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      ),
+    )
+
+    if (focusable.length === 0) {
+      event.preventDefault()
+      return
+    }
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (!dialog.contains(document.activeElement)) {
+      event.preventDefault()
+      first.focus()
+    } else if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
     }
   }
 
@@ -240,6 +323,7 @@ export default function RoomList({ sessionId }) {
   return (
     <section
       className="room-list"
+      ref={roomListRef}
       tabIndex={0}
       aria-label="Список коворкингов"
     >
@@ -301,9 +385,11 @@ export default function RoomList({ sessionId }) {
         >
           <section
             className={`room-dialog${dialogClosing ? ' room-dialog--closing' : ''}`}
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="room-dialog-title"
+            onKeyDown={handleDialogKeyDown}
           >
             <h3 className="room-dialog__title" id="room-dialog-title">
               Как занять {roomToOccupy.name}?
