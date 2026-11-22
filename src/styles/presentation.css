@@ -12,6 +12,7 @@
 
   display: flex;
   flex: 1;
+  width: 100%;
   min-width: 0;
   min-height: 0;
   align-items: center;
@@ -26,6 +27,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1 1 auto;
+  width: min(100%, calc(100cqw - 2 * var(--slider-control-space)));
+  min-width: 0;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
 }
@@ -35,14 +40,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
   padding: var(--space-2);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius-dialog);
   background-color: var(--phone-frame);
   box-shadow: var(--shadow-phone);
   overflow: hidden;
-  min-width: 0;
-  min-height: 0;
 }
 
 .presentation:not([hidden]) .presentation__frame {
@@ -52,7 +60,10 @@
 .slider__viewport {
   width: min(
     calc(100cqw - 2 * var(--slider-control-space)),
-    calc(100cqh * var(--slide-ratio))
+    calc(
+      (100cqh - 2 * var(--space-2) - 2 * var(--border-width)) *
+        var(--slide-ratio)
+    )
   );
   aspect-ratio: var(--slide-ratio);
   overflow: hidden;
@@ -151,9 +162,10 @@
 
 .presentation__caption {
   text-align: center;
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
   color: var(--text-muted);
   font-size: var(--font-size-14);
+  white-space: nowrap;
   transition:
     opacity var(--dur-base) var(--ease-out),
     translate var(--dur-base) var(--ease-out);

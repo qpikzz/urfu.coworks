@@ -139,6 +139,7 @@ export default function PresentationTab({ hidden }) {
       >
         <ArrowIcon direction="next" />
       </button>
+      </div>
 
       <div
         className={`presentation__caption${showCaption ? '' : ' presentation__caption--hidden'}`}
@@ -152,7 +153,6 @@ export default function PresentationTab({ hidden }) {
           «Новости радиофака»
         </a>{' '}
         во ВКонтакте
-      </div>
       </div>
     </section>
   )
