@@ -98,17 +98,18 @@ export default function PresentationTab({ hidden }) {
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <div className="slider__frame">
-          <button
-            className="slider__arrow slider__arrow--prev"
-            type="button"
-            aria-label="Предыдущий слайд"
-            disabled={isFirst}
-            onClick={goPrev}
-          >
-            <ArrowIcon direction="prev" />
-          </button>
+        <button
+        className="slider__arrow slider__arrow--prev"
+        type="button"
+        aria-label="Предыдущий слайд"
+        disabled={isFirst}
+        onClick={goPrev}
+      >
+        <ArrowIcon direction="prev" />
+      </button>
 
+      <div className="slider__frame">
+        <div className="presentation__frame">
           <div className="slider__viewport">
             <iframe
               ref={frameRef}
@@ -117,17 +118,18 @@ export default function PresentationTab({ hidden }) {
               srcDoc={presentationHtml}
             />
           </div>
-
-          <button
-            className="slider__arrow slider__arrow--next"
-            type="button"
-            aria-label="Следующий слайд"
-            disabled={isLast}
-            onClick={goNext}
-          >
-            <ArrowIcon direction="next" />
-          </button>
         </div>
+      </div>
+
+      <button
+        className="slider__arrow slider__arrow--next"
+        type="button"
+        aria-label="Следующий слайд"
+        disabled={isLast}
+        onClick={goNext}
+      >
+        <ArrowIcon direction="next" />
+      </button>
       </div>
     </section>
   )
