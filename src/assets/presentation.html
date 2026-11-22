@@ -13,7 +13,7 @@
   --bg:#22252c;--surface-1:#2d313c;--surface-2:#404652;--accent:#3c6bd3;--accent-soft:#96b4fc;
   --text:#fff;--text-muted:#a6b0c2;--border:rgba(255,255,255,.12);
   --status-free:#4bd37b;--status-available:#5fa8ff;--status-busy:#f26464;
-  --phone-frame:#0f1117;--glow-accent:rgba(60,107,211,.12);
+  --phone-frame:#0f1117;--glow-accent:rgba(60,107,211,.12);--font-size-12:0.75rem;--font-size-14:0.875rem;
   --font-base:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --radius-card:16px;--radius-group:20px;--radius-pill:999px;--radius-phone:40px;
   --dur-fast:140ms;--dur-base:240ms;--dur-slow:360ms;
@@ -77,10 +77,13 @@ a{color:inherit;text-decoration:none}
 .hero .lead{width:760px;font-size:36px}
 
 /* 01 */
-.stack{inset:0;display:grid;grid-template-rows:152px 120px 1fr 416px;justify-items:center}
+.stack{inset:0;display:grid;grid-template-rows:152px 120px 1fr 520px 48px;justify-items:center}
 .stack .title{grid-row:2;align-self:center;width:100%}
 .stack .lead{grid-row:3;align-self:center;width:1200px;text-align:center}
-.stack .ph{grid-row:4;width:840px;border-radius:var(--radius-group) var(--radius-group) 0 0}
+.stack .ph{grid-row:4;width:840px;border-radius:var(--radius-group);overflow:hidden;border:none;background:none;display:block}
+.stack .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.stack .ph-caption{grid-row:5;color:var(--text-muted);font-size:var(--font-size-14);text-align:center}
+.stack .ph-caption a{color:var(--accent-soft)}
 .ph{border:2px dashed var(--border);background:repeating-linear-gradient(135deg,var(--surface-1) 0 22px,#303541 22px 44px);
   border-radius:var(--radius-group);display:grid;place-items:center;color:var(--text-muted);font-size:30px}
 
@@ -195,7 +198,8 @@ a{color:inherit;text-decoration:none}
     <div class="abs stack">
       <h2 class="title" data-a="up">Проблема</h2>
       <p class="lead" data-a="up" style="--i:1">Сейчас найти коворкинг означает обойти этажи. Нет информации о занятости ни у студентов, ни у администрации.<br>Команде трудно найти место, соло-студенту тихий уголок.</p>
-      <div class="ph" data-a="up" style="--i:3">[Иллюстрация]</div>
+      <div class="ph" data-a="up" style="--i:3"><img src="__PROBLEM_COWORKING_IMG__" alt="Коворкинг с пустыми столами и креслами" decoding="async"></div>
+      <p class="ph-caption" data-a="up" style="--i:4">Видео из группы <a href="https://vkvideo.ru/video-49378_456239361" target="_blank" rel="noopener">"Новости радиофака"</a></p>
     </div>
   </section>
 
@@ -343,6 +347,7 @@ function go(n,force){
   idx=n;
   try{history.replaceState(null,'','#'+(n+1))}catch(_){}
   try{parent.postMessage({type:'cowork-slides:state',index:idx,total:N},'*')}catch(_){}
+  try{parent.postMessage({type:'slide-change',index:idx},'*')}catch(_){}
 }
 // link to the separate "Макет раздела" page: set URL here, or the parent page can listen for the postMessage
 const DEMO_URL='';

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import presentationHtml from '../../assets/presentation.html?raw'
+import problemCoworking from '../../assets/problem-coworking.png'
 import '../../styles/presentation.css'
 
 function ArrowIcon({ direction }) {
@@ -115,7 +116,7 @@ export default function PresentationTab({ hidden }) {
               ref={frameRef}
               className="slider__embed"
               title="Презентация проекта"
-              srcDoc={presentationHtml}
+              srcDoc={presentationHtml.replace('__PROBLEM_COWORKING_IMG__', problemCoworking)}
             />
           </div>
         </div>
