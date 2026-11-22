@@ -77,13 +77,11 @@ a{color:inherit;text-decoration:none}
 .hero .lead{width:760px;font-size:36px}
 
 /* 01 */
-.stack{inset:0;display:grid;grid-template-rows:152px 120px 1fr 520px 48px;justify-items:center}
-.stack .title{grid-row:2;align-self:center;width:100%}
-.stack .lead{grid-row:3;align-self:center;width:1200px;text-align:center}
-.stack .ph{grid-row:4;width:840px;border-radius:var(--radius-group);overflow:hidden;border:none;background:none;display:block}
-.stack .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.stack .ph-caption{grid-row:5;color:var(--text-muted);font-size:var(--font-size-14);text-align:center}
-.stack .ph-caption a{color:var(--accent-soft)}
+.stack{inset:0;display:grid;grid-template-rows:152px 1fr 384px;justify-items:center}
+.stack .title{grid-row:1;align-self:center;width:100%}
+.stack .lead{grid-row:2;align-self:center;width:1200px;text-align:center}
+.stack .ph{grid-row:3;width:840px;height:384px;border-radius:var(--radius-group) var(--radius-group) 0 0;overflow:hidden;border:none;background:none;display:block}
+.stack .ph img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 .ph{border:2px dashed var(--border);background:repeating-linear-gradient(135deg,var(--surface-1) 0 22px,#303541 22px 44px);
   border-radius:var(--radius-group);display:grid;place-items:center;color:var(--text-muted);font-size:30px}
 
@@ -199,7 +197,6 @@ a{color:inherit;text-decoration:none}
       <h2 class="title" data-a="up">Проблема</h2>
       <p class="lead" data-a="up" style="--i:1">Сейчас найти коворкинг означает обойти этажи. Нет информации о занятости ни у студентов, ни у администрации.<br>Команде трудно найти место, соло-студенту тихий уголок.</p>
       <div class="ph" data-a="up" style="--i:3"><img src="__PROBLEM_COWORKING_IMG__" alt="Коворкинг с пустыми столами и креслами" decoding="async"></div>
-      <p class="ph-caption" data-a="up" style="--i:4">Видео из группы <a href="https://vkvideo.ru/video-49378_456239361" target="_blank" rel="noopener">"Новости радиофака"</a></p>
     </div>
   </section>
 

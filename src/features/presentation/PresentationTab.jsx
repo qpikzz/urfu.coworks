@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import presentationHtml from '../../assets/presentation.html?raw'
-import problemCoworking from '../../assets/problem-coworking.png'
+import problemCoworking from '../../assets/problem-coworking-wide.png'
 import '../../styles/presentation.css'
 
 function ArrowIcon({ direction }) {
@@ -26,22 +26,30 @@ function ArrowIcon({ direction }) {
 export default function PresentationTab({ hidden }) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [totalSlides, setTotalSlides] = useState(0)
+  const [showCaption, setShowCaption] = useState(false)
   const frameRef = useRef(null)
   const isFirst = totalSlides === 0 || currentSlide <= 0
   const isLast = totalSlides === 0 || currentSlide >= totalSlides - 1
 
   useEffect(() => {
     function handleMessage(event) {
+      if (event.origin !== window.location.origin) return
       if (!frameRef.current || event.source !== frameRef.current.contentWindow) {
         return
       }
 
       const data = event.data
 
-      if (!data || data.type !== 'cowork-slides:state') return
+      if (!data) return
 
-      if (Number.isInteger(data.index)) setCurrentSlide(data.index)
-      if (Number.isInteger(data.total)) setTotalSlides(data.total)
+      if (data.type === 'cowork-slides:state') {
+        if (Number.isInteger(data.index)) setCurrentSlide(data.index)
+        if (Number.isInteger(data.total)) setTotalSlides(data.total)
+      }
+
+      if (data.type === 'slide-change' && Number.isInteger(data.index)) {
+        setShowCaption(data.index === 1)
+      }
     }
 
     window.addEventListener('message', handleMessage)
@@ -131,6 +139,20 @@ export default function PresentationTab({ hidden }) {
       >
         <ArrowIcon direction="next" />
       </button>
+
+      <div
+        className={`presentation__caption${showCaption ? '' : ' presentation__caption--hidden'}`}
+      >
+        Кадр из видео сообщества{' '}
+        <a
+          href="https://vkvideo.ru/video-49378_456239361"
+          target="_blank"
+          rel="noopener"
+        >
+          «Новости радиофака»
+        </a>{' '}
+        во ВКонтакте
+      </div>
       </div>
     </section>
   )
