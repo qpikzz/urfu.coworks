@@ -10,7 +10,7 @@ export default function SiteHeader({ tabs, activeTab, onTabChange }) {
       if (event.origin !== window.location.origin) return
       if (event.data?.type !== 'slide-change' || !Number.isInteger(event.data.index)) return
 
-      if (event.data.index === 9) {
+      if (event.data.index === 10) {
         setAlertTab('demo')
       } else if (alertTab === 'demo') {
         setAlertTab(null)
